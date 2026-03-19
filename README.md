@@ -1,40 +1,38 @@
+# Tasy PDF Auto
+
+Uma extensão para navegadores baseados em Chromium focada em agilizar a visualização e a geração de relatórios em PDF dentro do sistema hospitalar Tasy.
+
+## Funcionalidades
+
+- **Double Buffering (Troca Suave):** Carrega o PDF em uma camada invisível e só faz a troca quando ele estiver pronto. Isso evita que a tela "pisque" ou fique totalmente cinza durante atualizações sequenciais.
+- **Prefetch (Cache Antecipado):** Busca os metadados do relatório proativamente em plano de fundo, muito antes do usuário clicar em salvar. Traz respostas quase instantâneas.
+- **Debounce Inteligente:** Corta pela raiz cliques múltiplos acidentais no botão salvar, impedindo que o Tasy dispare requisições em cascata que podem causar lentidão.
+- **Bloqueio de Abas Indesejadas:** Intercepta as chamadas nativas manuais para links do tipo `blob:` e redireciona os PDFs para o renderizador aprimorado e limpo da extensão.
+
 ## Como instalar
 
-Como a extensão não está publicada na Chrome Web Store, a instalação precisa ser feita manualmente no modo desenvolvedor.
+Por não estar atualmente publicada na Chrome Web Store, a instalação leva poucos segundos através do ambiente de desenvolvedor do próprio navegador.
 
-1. Baixe ou clone o projeto
-   Tenha a pasta da extensão no seu computador, incluindo o arquivo `manifest.json`.
+1. **Baixe ou clone o repositório:** Certifique-se de manter todos os arquivos em uma mesma pasta (o arquivo `manifest.json` deve estar na raiz desta pasta).
+2. **Abra as configurações do Chrome:** Digite na barra de endereço: `chrome://extensions/`
+3. **Modo Desenvolvedor:** No canto superior direito da página, habilite a chave **Modo do desenvolvedor**.
+4. **Carregue localmente:** Em seguida, clique no botão **Carregar sem compactação** (Load unpacked) que aparecerá no topo esquerdo e selecione a pasta da extensão.
+5. **Pronto!** A extensão será listada e já começará a operar nos quadros do sistema.
 
-2. Abra a página de extensões do Chrome
-   Na barra de endereço, acesse:
-   `chrome://extensions/`
+## Dica de Uso
 
-3. Ative o modo desenvolvedor
-   No canto superior direito da tela, habilite a opção **Modo do desenvolvedor**.
+Para facilitar a customização no seu dia a dia, sugerimos deixar o acesso rápido visível.
 
-4. Carregue a extensão
-   Clique em **Carregar sem compactação**.
-   Depois, selecione a pasta do projeto, que é a pasta onde está o `manifest.json`.
+1. Clique no ícone de "Quebra-cabeça" (Extensões) na barra superior do navegador.
+2. Encontre a **Tasy PDF Auto** na lista.
+3. Clique no botão **Fixar** (o ícone contendo um "alfinete").
 
-5. Pronto
-   A extensão vai aparecer na lista e já estará disponível no navegador.
+## Controle Total (Popup)
 
-## Uso
+Ao clicar sobre o ícone fixado, um painel intuitivo será exibido para você dominar as preferências do sistema. A partir dali, você pode dinamicamente:
 
-Pra facilitar, vale fixar a extensão na barra do Chrome:
-
-1. Clique no ícone de extensões no canto superior direito do navegador
-2. Ache a **Tasy PDF Auto**
-3. Clique em **Fixar**
-
-Com isso, o ícone da extensão fica sempre visível e você consegue abrir o popup rapidamente.
-
-## O que dá pra controlar no popup
-
-No menu da extensão, você pode:
-
-* ligar ou desligar a extensão
-* ativar ou desativar o double buffer no preview
-* ativar ou desativar o prefetch/cache antecipado
+* **Ligar/Desligar** a atuação geral da extensão a qualquer momento.
+* **Habilitar/Desabilitar** o modo gráfico Double Buffer.
+* **Habilitar/Desabilitar** o trabalho invisível de Prefetch/Cache de dados.
 
 
