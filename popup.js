@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const prefetch = document.getElementById('prefetch');
   const reloadWarning = document.getElementById('reload-warning');
 
-  // Load existing settings
+  // Carrega as configurações existentes
   chrome.storage.local.get({
     extEnabled: true,
     doubleBuffer: true,
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     prefetch.checked = prefs.prefetch;
   });
 
-  // Function to save and show warning
+  // Função para salvar e exibir aviso de recarregamento
   function saveOnChange(e) {
     const key = e.target.id;
     const value = e.target.checked;
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Attach listeners
+  // Adiciona os ouvintes de eventos
   extEnabled.addEventListener('change', saveOnChange);
   doubleBuffer.addEventListener('change', saveOnChange);
   prefetch.addEventListener('change', saveOnChange);
