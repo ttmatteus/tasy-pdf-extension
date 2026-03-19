@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Tasy PDF Auto",
+  "version": "1.0",
+  "description": "Gera PDF automaticamente ao salvar no Tasy",
+  "permissions": ["scripting", "tabs", "webNavigation"],
+  "host_permissions": ["*://*/*"],
+  "icons": {
+    "512": "icon.png"
+  },
+  "action": {
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["*://*/*"]
+    }
+  ]
+}
