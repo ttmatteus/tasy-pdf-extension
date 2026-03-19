@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tasy PDF Auto - Configurações</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #1e1e24;
+      --card-bg: #2b2b36;
+      --text: #ffffff;
+      --text-muted: #a0a0b0;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #3f3f5a;
+    }
+
+    body {
+      width: 330px;
+      margin: 0;
+      padding: 16px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      box-sizing: border-box;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header img {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0;
+      letter-spacing: -0.3px;
+    }
+
+    .setting {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+
+    .setting:hover {
+      transform: translateY(-2px);
+    }
+
+    .setting-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .setting-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Toggle Switch CSS */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #4b4b60;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--text-muted);
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    #reload-warning {
+      color: #fbbf24;
+      font-weight: 500;
+      display: none;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="icon.png" alt="Logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg=='">
+    <h1>Tasy PDF Auto</h1>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <span class="setting-title">Ativar Extensão</span>
+      <label class="switch">
+        <input type="checkbox" id="extEnabled">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Ativa a geração automática e escuta de salvamentos.</p>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <span class="setting-title">Live Preview (Double Buffer)</span>
+      <label class="switch">
+        <input type="checkbox" id="doubleBuffer">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Evita que a tela pisque/fique cinza ao gerar um novo PDF.</p>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <span class="setting-title">Antecipação (Prefetch)</span>
+      <label class="switch">
+        <input type="checkbox" id="prefetch">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Busca silenciosamente os metadados para acelerar a primeira geração.</p>
+  </div>
+
+  <div class="footer">
+    Configurações salvas automaticamente.
+    <div id="reload-warning">Recarregue a página do Tasy para aplicar.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
