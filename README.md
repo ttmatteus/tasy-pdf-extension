@@ -1,6 +1,10 @@
+<div align="center">
+  <img src="icon.png" alt="Logo Tasy PDF Auto" width="120"/>
+</div>
+
 # Tasy PDF Auto
 
-Uma extensão para navegadores baseados em Chromium focada em agilizar a visualização e a geração de relatórios em PDF dentro do sistema hospitalar Tasy.
+O **Tasy PDF Auto** é uma extensão desenvolvida para navegadores Chromium focada em agilizar e otimizar a visualização e a geração de relatórios em PDF dentro do sistema hospitalar Tasy. Ferramenta essencial para equipes de TI e desenvolvedores, ela elimina travamentos, telas piscando e abas excessivas, acelerando testes e a operação diária no sistema.
 
 ## Funcionalidades
 
@@ -34,5 +38,13 @@ Ao clicar sobre o ícone fixado, um painel intuitivo será exibido para você do
 * **Ligar/Desligar** a atuação geral da extensão a qualquer momento.
 * **Habilitar/Desabilitar** o modo gráfico Double Buffer.
 * **Habilitar/Desabilitar** o trabalho invisível de Prefetch/Cache de dados.
+
+## Créditos e Equipe
+
+Este projeto foi construído e aprimorado colaborativamente visando a melhoria do fluxo de trabalho diário de quem precisa gerar e manter relatórios no sistema Tasy. Todo o núcleo lógico e de interceptação gráfica não existiria sem as contribuições diretas de:
+
+* **Matteus** - [@ttmatteus](https://github.com/ttmatteus)
+* **Juan** - [@juanlleite](https://github.com/juanlleite)
+* **Denes** - [@denesjunior](https://github.com/denesjunior)
 
 
