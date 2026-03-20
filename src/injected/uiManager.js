@@ -318,6 +318,7 @@ window.TasyPdf = window.TasyPdf || {};
          reportCode: null, reportSeq: null,
          bandSeq: null, bandName: null,
          activeField: null,
+         fieldSnapshot: null, // Novo: Snapshot do campo original
          rawBands: [], rawFields: []
       };
 
@@ -555,6 +556,9 @@ window.TasyPdf = window.TasyPdf || {};
       // -------- LEVEL 3: FORMULÁRIO DE EDIÇÃO --------
       function loadEditFormUI() {
          const f = edState.activeField;
+         // CAPTURA SNAPSHOT (Deep Copy) p/ Undo/Reverter
+         edState.fieldSnapshot = JSON.parse(JSON.stringify(f));
+
          edTitle.innerHTML = `<span style="color:#cbd5e1">${icons.edit}</span> Propriedades <span style="color:#64748b; margin:0 4px;">/</span> <span style="color:#3b82f6">${f.DS_CAMPO || 'Componente'}</span>`;
          edBody.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:20px; background:#1e1e24; padding:20px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);">
@@ -636,9 +640,14 @@ window.TasyPdf = window.TasyPdf || {};
                 </div>
              </div>
              
-             <button id="ed-btn-save" style="margin-top:8px; width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px; transition: all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
-               ${icons.save} Aplicar Alterações
-             </button>
+             <div style="display:flex; gap:8px; margin-top:8px;">
+               <button id="ed-btn-revert" style="flex:1; padding:12px; background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.2); border-radius:8px; font-weight:600; cursor:pointer; font-size:14px; transition: all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                 ${icons.arrowLeft} Reverter
+               </button>
+               <button id="ed-btn-save" style="flex:2; padding:12px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:14px; transition: all 0.2s; display:flex; align-items:center; justify-content:center; gap:8px;">
+                 ${icons.save} Aplicar Alterações
+               </button>
+             </div>
           </div>
        `;
 
@@ -659,6 +668,34 @@ window.TasyPdf = window.TasyPdf || {};
          labelPicker.value = ctx.tasyToHex ? ctx.tasyToHex(labelText.value) : '#ffffff';
          labelPicker.addEventListener('input', (e) => labelText.value = e.target.value.toUpperCase());
          labelText.addEventListener('input', (e) => { if (e.target.value.startsWith('#') && e.target.value.length === 7) labelPicker.value = e.target.value.toLowerCase(); });
+
+         // LÓGICA REVERTER (UNDO/SNAPSHOT)
+         document.getElementById('ed-btn-revert').addEventListener('click', () => {
+            const s = edState.fieldSnapshot;
+            if (!s) return;
+
+            document.getElementById('ed-inp-left').value = s.QT_ESQUERDA || 0;
+            document.getElementById('ed-inp-top').value = s.QT_TOPO || 0;
+            document.getElementById('ed-inp-width').value = s.QT_TAMANHO || 0;
+            document.getElementById('ed-inp-height').value = s.QT_ALTURA || 0;
+            document.getElementById('ed-inp-fontsize').value = s.QT_TAM_FONTE || 0;
+            document.getElementById('ed-inp-text').value = s.DS_CONTEUDO || '';
+            document.getElementById('ed-inp-fontcolor').value = s.DS_COR_FONTE || '';
+            document.getElementById('ed-inp-labelcolor').value = s.DS_COR_LABEL || '';
+            document.getElementById('ed-inp-align').value = s.IE_ALINHAMENTO || '';
+            document.getElementById('ed-inp-fontstyle').value = s.DS_ESTILO_FONTE || '';
+            document.getElementById('ed-chk-transp').checked = s.IE_TRANSPARENTE === 'S';
+            document.getElementById('ed-chk-borda-sup').checked = s.IE_BORDA_SUP === 'S';
+            document.getElementById('ed-chk-borda-inf').checked = s.IE_BORDA_INF === 'S';
+            document.getElementById('ed-chk-borda-esq').checked = s.IE_BORDA_ESQ === 'S';
+            document.getElementById('ed-chk-borda-dir').checked = s.IE_BORDA_DIR === 'S';
+
+            // Sync Pickers
+            colorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_FONTE) : '#000000';
+            labelPicker.value = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_LABEL) : '#ffffff';
+
+            if (ctx.showToast) ctx.showToast("Valores restaurados do Snapshot original!", "info");
+         });
 
          document.getElementById('ed-btn-save').addEventListener('click', async () => {
             const btn = document.getElementById('ed-btn-save');
