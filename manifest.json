@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Tasy PDF Auto",
-  "version": "1.0",
-  "description": "Gera PDF automaticamente ao salvar no Tasy",
+  "version": "2.0.0",
+  "description": "Otimização visual no Tasy: Troca Suave (Buffer), Prefetch e Debounce em relatórios.",
+  "author": "Matteus, Juan e Denes",
   "permissions": ["scripting", "tabs", "webNavigation", "storage"],
   "host_permissions": ["*://*/*"],
   "icons": {
