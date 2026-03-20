@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Tasy PDF Auto",
   "version": "2.0.0",
-  "description": "Otimização visual no Tasy: Troca Suave (Buffer), Prefetch e Debounce em relatórios.",
-  "author": "Matteus, Juan e Denes",
+  "description": "Gera PDF automaticamente ao salvar no Tasy HTML5",
+  "author": "Matteus, Juan, Denes",
   "permissions": ["scripting", "tabs", "webNavigation", "storage"],
   "host_permissions": ["*://*/*"],
   "icons": {
@@ -11,14 +11,26 @@
   },
   "action": {
     "default_icon": "icon.png",
-    "default_popup": "popup.html"
+    "default_popup": "src/popup/popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["src/content/contentBridge.js"],
+      "run_at": "document_start"
+    }
+  ],
   "web_accessible_resources": [
     {
-      "resources": ["injected.js"],
+      "resources": [
+        "src/injected/pdfService.js",
+        "src/injected/uiManager.js",
+        "src/injected/httpInterceptor.js",
+        "src/injected/core.js"
+      ],
       "matches": ["*://*/*"]
     }
   ]
