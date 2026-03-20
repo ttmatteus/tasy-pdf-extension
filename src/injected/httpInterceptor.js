@@ -60,6 +60,7 @@ window.TasyPdf = window.TasyPdf || {};
         payload: {
           url: pdfUrl,
           code: reportInfo.code,
+          seq: param.sequenceId,
           date: new Date().toLocaleString('pt-BR')
         }
       }, '*');
@@ -111,7 +112,12 @@ window.TasyPdf = window.TasyPdf || {};
 
       window.postMessage({
         type: 'TASY_PDF_HISTORY_ADD',
-        payload: { url: pdfUrl, code: code, date: new Date().toLocaleString('pt-BR') }
+        payload: {
+          url: pdfUrl,
+          code: code,
+          seq: param?.sequenceId,
+          date: new Date().toLocaleString('pt-BR')
+        }
       }, '*');
     } catch (err) {
       if (ctx.showToast) ctx.showToast(`Erro: ${err.message}`, 'error');

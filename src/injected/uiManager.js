@@ -204,7 +204,9 @@ window.TasyPdf = window.TasyPdf || {};
          band: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
          field: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>',
          save: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
-         arrowLeft: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>'
+         arrowLeft: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+         history: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+         trash: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
       };
 
       nav.innerHTML = `
@@ -235,6 +237,23 @@ window.TasyPdf = window.TasyPdf || {};
       const edTitle = document.getElementById('tasy-ed-title');
       const edBack = document.getElementById('tasy-ed-btn-back');
       const edPreview = document.getElementById('tasy-ed-btn-preview');
+      
+      let historyData = [];
+
+      window.addEventListener('message', (e) => {
+         if (e.data && e.data.type === 'TASY_PDF_HISTORY_DATA') {
+            historyData = e.data.payload || [];
+            if (input.value.trim() === '' && edState.level === 0) {
+               renderHistory();
+            }
+         }
+      });
+
+      const requestHistory = () => {
+         window.postMessage({ type: 'TASY_PDF_HISTORY_GET' }, '*');
+      };
+
+      requestHistory();
 
       // --- LÓGICA DE MINIMIZAÇÃO/CLIQUE FORA ---
       const collapseSearch = () => {
@@ -246,6 +265,19 @@ window.TasyPdf = window.TasyPdf || {};
       };
 
       const expandSearch = () => {
+         // Se já está aberto e no nível de busca (não editor), evita re-renderizar pra não quebrar o evento de clique
+         const isSearchOpen = nav.style.opacity === '1';
+         const isNavIdle = edState.level === 0 && input.value.trim() === '';
+
+         if (isSearchOpen) {
+             nav.style.transform = 'translateX(-50%) scale(1)';
+             if (isNavIdle && results.innerHTML === '') {
+                 renderHistory();
+             }
+             return; 
+         }
+
+         console.log('[Tasy PDF] Spotlight Expanding...');
          nav.style.opacity = '1';
          nav.style.transform = 'translateX(-50%) scale(1)';
 
@@ -256,6 +288,10 @@ window.TasyPdf = window.TasyPdf || {};
          } else if (input.value.trim() !== '') {
             results.style.display = 'block';
             document.getElementById('tasy-nav-header').style.display = 'flex';
+         } else {
+            // Se vazio, mostra historico
+            requestHistory();
+            renderHistory();
          }
       };
 
@@ -301,6 +337,48 @@ window.TasyPdf = window.TasyPdf || {};
          target.innerHTML = `<div style="padding: 14px; color: #a0a0b0; font-size: 14px; text-align: center;">${msg}... aguarde</div>`;
       }
 
+      function renderHistory() {
+         if (!historyData || historyData.length === 0) {
+            results.style.display = 'none';
+            return;
+         }
+         results.style.display = 'block';
+         results.innerHTML = `
+            <div style="padding: 10px 16px; font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px; background: rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between;">
+               <div style="display: flex; align-items: center; gap: 6px;">${icons.history} Relatórios Recentes</div>
+               <div id="tasy-btn-hist-clear" style="cursor: pointer; color: #ef4444; opacity: 0.7; transition: opacity 0.2s; display: flex; align-items: center; gap: 4px;">
+                  ${icons.trash} Limpar
+               </div>
+            </div>
+         ` + historyData.map(h => `
+            <div class="tasy-res-item tasy-hist-item" data-code="${h.code}" data-seq="${h.seq || ''}" style="padding: 10px 16px; border-bottom: 1px solid #3f3f5a; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: background 0.1s;">
+               <div style="display: flex; flex-direction: column;">
+                  <span style="color: #f8fafc; font-size: 13px; font-weight: 500;">${h.code}</span>
+                  <span style="color: #64748b; font-size: 11px;">${h.date}</span>
+               </div>
+               <div style="display: flex; gap: 8px;">
+                  ${h.seq ? `<button class="tasy-btn-edit" style="border:none; background:rgba(245, 158, 11, 0.1); color:#f59e0b; padding:6px 12px; border-radius:6px; font-weight:600; cursor:pointer; transition:all 0.2s;"><span style="display:flex;align-items:center;gap:6px;">${icons.edit} Editor UI</span></button>` : ''}
+                  <button class="tasy-btn-gen" style="border:none; background:rgba(59, 130, 246, 0.1); color:#3b82f6; padding:6px 12px; border-radius:6px; font-weight:600; cursor:pointer; transition:all 0.2s;"><span style="display:flex;align-items:center;gap:6px;">${icons.print} Ver</span></button>
+               </div>
+            </div>
+         `).join('');
+      }
+
+      function renderClearConfirm() {
+         results.style.display = 'block';
+         results.innerHTML = `
+            <div style="padding: 30px 20px; text-align: center; background: #22222b; border-radius: 0 0 12px 12px;">
+               <div style="color: #ef4444; margin-bottom: 16px; display: flex; justify-content: center; transform: scale(3);">${icons.trash}</div>
+               <div style="color: #f8fafc; font-size: 16px; font-weight: 600; margin-bottom: 8px; margin-top: 24px;">Limpar Histórico?</div>
+               <div style="color: #94a3b8; font-size: 13px; margin-bottom: 24px; max-width: 250px; margin-left: auto; margin-right: auto; line-height: 1.4;">Esta ação não pode ser desfeita. Todos os relatórios recentes serão removidos.</div>
+               <div style="display: flex; gap: 12px; justify-content: center;">
+                  <button id="tasy-btn-confirm-clear-no" style="border: 1px solid #3f3f5a; background: transparent; color: #f8fafc; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;">Cancelar</button>
+                  <button id="tasy-btn-confirm-clear-yes" style="border: none; background: #ef4444; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">Sim, Limpar Tudo</button>
+               </div>
+            </div>
+         `;
+      }
+
       // LISTAGEM DE BUSCA
       function renderResults(list) {
          if (!list || list.length === 0) {
@@ -326,7 +404,10 @@ window.TasyPdf = window.TasyPdf || {};
       input.addEventListener('input', (e) => {
          e.target.value = e.target.value.replace(/\D/g, ''); // Somente números
          const val = e.target.value.trim().toLowerCase();
-         if (!val) { results.style.display = 'none'; return; }
+         if (!val) { 
+            renderHistory();
+            return; 
+         }
 
          if (ctx.allReports && ctx.allReports.length > 0) {
             const matches = ctx.allReports.filter(r =>
@@ -346,16 +427,49 @@ window.TasyPdf = window.TasyPdf || {};
 
       results.addEventListener('click', (e) => {
          const item = e.target.closest('.tasy-res-item');
+         
+         // Botão de Limpar Histórico
+         if (e.target.closest('#tasy-btn-hist-clear')) {
+            renderClearConfirm();
+            return;
+         }
+
+         // Confirmação de Limpeza - SIM
+         if (e.target.closest('#tasy-btn-confirm-clear-yes')) {
+            window.postMessage({ type: 'TASY_PDF_HISTORY_CLEAR' }, '*');
+            historyData = [];
+            renderHistory();
+            return;
+         }
+
+         // Confirmação de Limpeza - NÃO
+         if (e.target.closest('#tasy-btn-confirm-clear-no')) {
+            renderHistory();
+            return;
+         }
+
          if (!item) return;
+
          const code = item.getAttribute('data-code');
          const seq = item.getAttribute('data-seq');
 
-         if (e.target.closest('.tasy-btn-gen')) {
-            input.value = ''; results.style.display = 'none'; input.blur();
-            if (ctx.generateManualPdf) ctx.generateManualPdf(code);
-         } else if (e.target.closest('.tasy-btn-edit')) {
+         // Esconde o spotlight ao iniciar uma ação
+         const closeNav = () => { input.value = ''; results.style.display = 'none'; input.blur(); };
+
+         // PRIORIDADE: Botão de Editar (Studio)
+         if (e.target.closest('.tasy-btn-edit')) {
+            closeNav();
             edState.level = 1; edState.reportCode = code; edState.reportSeq = seq;
             loadBandsUI();
+            return;
+         }
+
+         // GERAÇÃO DE PDF: Se clicou no botão de Gerar OU se clicou no item de histórico (mas não no botão de editar)
+         if (e.target.closest('.tasy-btn-gen') || item.classList.contains('tasy-hist-item')) {
+            closeNav();
+            console.log('[Tasy PDF] Generating PDF for:', code);
+            if (ctx.generateManualPdf) ctx.generateManualPdf(code);
+            return;
          }
       });
 
