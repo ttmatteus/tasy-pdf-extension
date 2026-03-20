@@ -146,6 +146,8 @@ window.TasyPdf = window.TasyPdf || {};
           "_schematicObjCode": 1038025,
           "isToReloadActivationParameters": true,
           "cdSetorAtendimento": 0,
+          "_filterCode": 0,
+          "_checkoutFilters": [],
           "_dimensionValues": {}
         },
         "legendDef": {},
@@ -170,7 +172,9 @@ window.TasyPdf = window.TasyPdf || {};
           "IE_TIPO_RELATORIO": "CMCZ",
           "CD_CLASSIF_RELAT": null,
           "NR_SEQ_MODULO": null,
-          "CD_PAIS": null
+          "CD_PAIS": null,
+          "_filterCode": 0,
+          "_checkoutFilters": []
         },
         "isAutomaticPagination": true,
         "saveOrderBy": true
