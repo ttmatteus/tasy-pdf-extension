@@ -22,10 +22,8 @@ window.TasyPdf = window.TasyPdf || {};
 
     try {
       const reportInfo = ctx.getReportCodeFromScope();
-      if (!reportInfo) {
-        console.log('[Auto] relatório não encontrado no scope');
-        return;
-      }
+      console.log('[Tasy PDF] runAfterSave triggered. Scope code:', reportInfo?.code);
+      if (!reportInfo) return;
 
       let param = ctx.getCachedReportParam();
       if (!param || param.code !== reportInfo.code) {
@@ -78,7 +76,11 @@ window.TasyPdf = window.TasyPdf || {};
   };
 
   ctx.generateManualPdf = async function (code) {
-    if (ctx.running) return;
+    if (ctx.running) {
+       console.log('[Tasy PDF] generateManualPdf bailing: already running. Setting pending.');
+       ctx.pendingRun = true;
+       return;
+    }
     if (!ctx.$httpGlobal) {
       if (ctx.showToast) ctx.showToast('A extensão ainda não identificou o Angular.', 'error');
       console.warn('[Tasy PDF] Operação manual abortada: Angular não pronto.');

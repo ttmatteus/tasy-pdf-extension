@@ -13,9 +13,15 @@ window.addEventListener('message', (event) => {
 
     chrome.storage.local.get({ pdfHistory: [] }, (res) => {
       let history = res.pdfHistory;
+      
+      // Remove o código se já existir (para manter sempre o mais recente no topo do array)
+      if (payload.code) {
+         history = history.filter(h => h.code !== payload.code);
+      }
+      
       history.unshift(payload);
 
-      // Mantém os top 8 mais recentes
+      // Mantém os top 8 mais recentes exclusivos
       if (history.length > 8) {
         history = history.slice(0, 8);
       }
