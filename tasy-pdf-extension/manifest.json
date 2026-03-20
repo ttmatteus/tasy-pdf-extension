@@ -13,11 +13,23 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "js": ["src/content/contentBridge.js"],
+      "run_at": "document_start"
+    }
+  ],
   "web_accessible_resources": [
     {
-      "resources": ["injected.js"],
+      "resources": [
+        "src/injected/pdfService.js",
+        "src/injected/uiManager.js",
+        "src/injected/httpInterceptor.js",
+        "src/injected/core.js"
+      ],
       "matches": ["*://*/*"]
     }
   ]

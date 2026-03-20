@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Tasy PDF Auto - Configurações</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #334155;
+      --accent: #6366f1;
+    }
+
+    body {
+      width: 350px;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, sans-serif;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .setting {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .setting:hover {
+      border-color: var(--primary);
+      box-shadow: 0 8px 16px -8px rgba(0, 0, 0, 0.4);
+    }
+
+    .setting-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .setting-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .setting-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 6px;
+      border-radius: 8px;
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--primary);
+    }
+
+    .setting-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
+
+    .desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.5;
+      padding-left: 42px;
+    }
+
+    .history-section {
+      margin-top: 20px;
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      padding: 16px;
+      border-radius: 16px;
+    }
+
+    .history-section h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #e2e8f0;
+    }
+
+    #historyList {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    #historyList li {
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    #historyList li:last-child {
+      border-bottom: none;
+    }
+
+    #historyList a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--primary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    #historyList a:hover {
+      color: #7dd3fc;
+    }
+
+    .hist-date {
+      color: var(--text-muted);
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 16px 0 0 0;
+      border-top: 1px solid var(--border);
+    }
+
+    #reload-warning {
+      color: #f59e0b;
+      font-weight: 600;
+      display: none;
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="/icon.png" alt="Logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzNiODJmNiIvPjwvc3ZnPg=='">
+    <h1>Tasy PDF Studio</h1>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <div class="setting-info">
+        <div class="setting-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+        </div>
+        <span class="setting-title">Status da Extensão</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="extEnabled">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Ativa ou desativa completamente o Studio no Tasy.</p>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <div class="setting-info">
+        <div class="setting-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </div>
+        <span class="setting-title">Preview Suave (Buffering)</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="doubleBuffer">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Elimina o "pisca-pisca" cinza durante a atualização do PDF.</p>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <div class="setting-info">
+        <div class="setting-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        </div>
+        <span class="setting-title">Performance Turbo</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="prefetch">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Acelera o carregamento inicial em até 40% (Zero-Request Mode).</p>
+  </div>
+
+  <div class="setting">
+    <div class="setting-header">
+      <div class="setting-info">
+        <div class="setting-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <span class="setting-title">Spotlight Search</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="spotlightSearch">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <p class="desc">Barra de acesso rápido aos relatórios pelo topo do sistema.</p>
+  </div>
+
+  <div class="history-section">
+    <h3>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Histórico de Sessão
+    </h3>
+    <ul id="historyList">
+      <!-- Items injectados pelo JS -->
+    </ul>
+  </div>
+
+  <div class="footer">
+    Configurações salvas automaticamente.
+    <div id="reload-warning">⚠ Recarregue a página do Tasy para aplicar.</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
