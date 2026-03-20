@@ -23,6 +23,19 @@ window.addEventListener('message', (event) => {
       chrome.storage.local.set({ pdfHistory: history });
     });
   }
+
+  if (event.data && event.data.type === 'TASY_PDF_HISTORY_GET') {
+    chrome.storage.local.get({ pdfHistory: [] }, (res) => {
+      window.postMessage({
+        type: 'TASY_PDF_HISTORY_DATA',
+        payload: res.pdfHistory
+      }, '*');
+    });
+  }
+
+  if (event.data && event.data.type === 'TASY_PDF_HISTORY_CLEAR') {
+    chrome.storage.local.set({ pdfHistory: [] });
+  }
 });
 
 // Listen to Extension Popup commands
