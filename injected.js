@@ -32,11 +32,11 @@
     $httpGlobal.post = function(url, data, config) {
       const promise = _oldPost(url, data, config);
 
-      if (url.includes('WebNativeDataSource/performAction')) {
+      if (url.includes('WebNativeDataSource/performAction') || url.includes('saveInlineEdit')) {
         promise.then(res => {
           const acao = res.data?.dados?.acao;
 
-          if (acao === 'UPDATE' || acao === 'INSERT') {
+          if (acao === 'UPDATE' || acao === 'INSERT' || url.includes('saveInlineEdit')) {
             triggerDebounced();
           }
         }).catch(() => {
@@ -303,6 +303,26 @@
       // clique do botão fica só como apoio o gatilho principal é a resposta do backend
     }
   }, true);
+
+  // --- Safety Net Nativo (Captura de Criação Manual via Blob) ---
+  // Caso o usuário aperte "Testar Relatório" manualmente, o Tasy vai tentar criar aquela tela ou aba de PDF do blob.
+  const originalWindowOpen = window.open;
+  window.open = function(url, target, features) {
+    if (url && typeof url === 'string' && url.startsWith('blob:')) {
+      updateOrOpenPreview(url);
+      return { focus: function() {}, close: function() {} };
+    }
+    return originalWindowOpen.apply(this, arguments);
+  };
+
+  const originalAnchorClick = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function() {
+    if (this.href && typeof this.href === 'string' && this.href.startsWith('blob:') && this.target === '_blank') {
+      updateOrOpenPreview(this.href);
+      return;
+    }
+    return originalAnchorClick.apply(this, arguments);
+  };
 
   initAngularDependencies();
 })();
