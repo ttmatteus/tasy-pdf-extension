@@ -306,16 +306,20 @@ window.TasyPdf = window.TasyPdf || {};
 
   ctx.initAngularDependencies = function () {
     if (typeof angular === 'undefined') {
-      if (++initAttempts > 20) return; // Fail smoothly on non-tasy sites
+      if (++initAttempts > 120) {
+        console.warn('[Tasy PDF] Angular timeout - abandoning initialization.');
+        return;
+      } // Fail smoothly on non-tasy sites       
       setTimeout(ctx.initAngularDependencies, 500);
       return;
     }
 
     const injector = angular.element(document.body).injector();
     if (!injector) {
-      if (++initAttempts > 20) return;
-      setTimeout(ctx.initAngularDependencies, 500);
-      return;
+      if (++initAttempts > 120) {
+        console.warn('[Tasy PDF] Angular timeout - abandoning initialization.');
+        return;
+      }
     }
 
     ctx.$httpGlobal = injector.get('$http');
