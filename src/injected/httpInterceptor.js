@@ -125,7 +125,7 @@ window.TasyPdf = window.TasyPdf || {};
     try {
       const r = await ctx.$httpGlobal.post(
         '/TasyAppServer/resources/service/Report/getReportsData',
-        ctx.buildReportsDataBody(code, 'CMCZ')
+        ctx.buildReportsDataBody(Number(code), 'CMCZ')
       );
       const p = r.data?.reports?.[0];
       if (p) return [{ CD_RELATORIO: p.code, DS_TITULO: p.title || 'Relatório sem Título', NR_SEQUENCIA: p.sequenceId }];
@@ -146,8 +146,6 @@ window.TasyPdf = window.TasyPdf || {};
           "_schematicObjCode": 1038025,
           "isToReloadActivationParameters": true,
           "cdSetorAtendimento": 0,
-          "_filterCode": 990959,
-          "_checkoutFilters": [],
           "_dimensionValues": {}
         },
         "legendDef": {},
@@ -165,16 +163,14 @@ window.TasyPdf = window.TasyPdf || {};
         "qtMaxRegistros": 0,
         "unificarCountRegistros": true,
         "withoutCache": false,
-        "allAttributes": ["NR_SEQUENCIA", "CD_CLASSIF_RELAT", "IE_FILTRO_TEXTO", "IE_ETIQUETA", "BTN_AVISO_CUSTOMIZADO", "CD_CLASSIF_RELAT_WHEB", "QT_MARGEM_SUP", "QT_ALTURA", "DS_ACTION_NAME", "IE_ESPACO_BRANCO", "CD_CGC_CLIENTE", "IE_ESPACO_ENTRE_LINHAS", "IE_BORDA_ESQ", "IE_IMPRIME_VAZIO", "IE_BORDA_DIR", "IE_FILTRO_EXCEL", "IE_TIPO_RELATORIO", "IE_FILTRO_WORD", "NR_VERSAO", "IE_GERAR_BASE", "NR_SEQ_ORDEM_SERV", "CD_RELATORIO_PAIS", "IE_BORDA_INF", "DS_SQL", "DS_COR_FUNDO", "IE_ESPACO_BRANCO_2", "QT_MARGEM_ESQ", "DS_REGRA", "IE_CHAMADA_DIRETA", "CD_CLASSIF_RELAT_PAIS", "DS_TITULO", "IE_FILTRO_HTML", "QT_MARGEM_DIR", "QT_COLUNA", "NR_SEQ_MODULO", "CD_PAIS", "QT_LARGURA", "IE_ORIENTACAO", "IE_TIPO_PAPEL", "IE_GERAR_RELATORIO", "IE_BORDA_SUP", "DS_MODULO", "IE_BASE_WHEB", "IE_AJUSTAR_TAMANHO", "DS_REPORT_TITLE_CUSTOM", "DT_ATUALIZACAO", "QT_ESPACO_COLUNA", "DS_PROCEDURE", "NM_USUARIO", "NR_SEQ_MOD_IMPL", "NM_TABELA", "CD_VERSION", "CD_RELATORIO_WHEB", "DT_LAST_MODIFICATION", "DS_CLIENTE", "CD_RELATORIO", "QT_MARGEM_INF", "CD_RELATORIO_WHEB_LCB"],
+        "allAttributes": ["NR_SEQUENCIA", "DS_TITULO", "IE_TIPO_RELATORIO", "CD_RELATORIO"],
         "ieLibera": false,
         "filterValues": {
           "_dimensionValues": {},
           "IE_TIPO_RELATORIO": "CMCZ",
           "CD_CLASSIF_RELAT": null,
           "NR_SEQ_MODULO": null,
-          "CD_PAIS": null,
-          "_filterCode": 990959,
-          "_checkoutFilters": []
+          "CD_PAIS": null
         },
         "isAutomaticPagination": true,
         "saveOrderBy": true

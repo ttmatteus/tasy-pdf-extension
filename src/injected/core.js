@@ -18,7 +18,7 @@ window.TasyPdf = window.TasyPdf || {};
   document.addEventListener('click', function(e) {
     let t = e.target;
     while(t && t.tagName !== 'A') t = t.parentElement;
-    if (t && t.href && t.href.startsWith('blob:') && t.href.includes('tasy_extension=1')) {
+    if (t && typeof t.href === 'string' && t.href.startsWith('blob:') && t.href.includes('tasy_extension=1')) {
       e.preventDefault();
       e.stopPropagation();
       console.log('Bloqueando clique de link indesejado para blob URL');
