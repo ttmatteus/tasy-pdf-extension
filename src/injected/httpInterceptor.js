@@ -107,14 +107,14 @@ window.TasyPdf = window.TasyPdf || {};
       const pdfUrl = '/TasyAppServer/resources/files/pdf/' + pdfFileName;
 
       ctx.updateOrOpenPreview(pdfUrl);
-      if (ctx.showToast) ctx.showToast(`✅ Relatório ${code} gerado na tela!`, 'success');
+      if (ctx.showToast) ctx.showToast(`Relatório ${code} gerado na tela!`, 'success');
 
       window.postMessage({
         type: 'TASY_PDF_HISTORY_ADD',
         payload: { url: pdfUrl, code: code, date: new Date().toLocaleString('pt-BR') }
       }, '*');
     } catch (err) {
-      if (ctx.showToast) ctx.showToast(`❌ Erro: ${err.message}`, 'error');
+      if (ctx.showToast) ctx.showToast(`Erro: ${err.message}`, 'error');
       console.error('[Tasy Manual Preview Failed]', err);
     } finally {
       ctx.running = false;

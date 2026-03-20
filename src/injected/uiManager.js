@@ -510,7 +510,7 @@ window.TasyPdf = window.TasyPdf || {};
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                   <label style="color:#94a3b8;font-size:11px;font-weight:500;">Ativar Bordas</label>
                   <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#f87171; font-size:11px;" title="SE marcado, o componente fica completamente transparente ignorando TODAS as cores">
-                    <span>⚠ Componente Transparente</span>
+                    <span>Componente Transparente</span>
                     <input type="checkbox" id="ed-chk-transp" ${f.IE_TRANSPARENTE === 'S' ? 'checked' : ''}>
                   </label>
                 </div>
@@ -578,7 +578,7 @@ window.TasyPdf = window.TasyPdf || {};
                // Atualiza memória cache
                Object.assign(edState.activeField, newObj);
 
-               btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;">✓ Salvo! Gerando PDF...</span>`;
+               btn.innerHTML = `<span style="display:flex;align-items:center;justify-content:center;gap:8px;">Salvo! Gerando PDF...</span>`;
                btn.style.background = "#10b981";
                btn.style.opacity = '1';
 
