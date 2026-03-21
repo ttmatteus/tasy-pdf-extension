@@ -49,18 +49,28 @@ window.TasyPdf = window.TasyPdf || {};
         if (param) reportParamCache[code] = param;
       }
       if (!param) return;
+
       const r2 = await http.post(
         '/TasyAppServer/resources/service/Report/generateReports',
         ctx.buildGenerateBody(param)
       );
+
       if (gen !== refreshGen) return; // stale — uma geração mais recente já existe
+
       const pdfFileName = r2.data?.reports?.[0]?.pdfFileName;
       if (!pdfFileName) return;
       const pdfUrl = '/TasyAppServer/resources/files/pdf/' + pdfFileName;
       ctx.updateOrOpenPreview(pdfUrl);
+
+      // Adiciona ao histórico (com SeqId do main)
       window.postMessage({
         type: 'TASY_PDF_HISTORY_ADD',
-        payload: { url: pdfUrl, code: code, date: new Date().toLocaleString('pt-BR') }
+        payload: { 
+          url: pdfUrl, 
+          code: code, 
+          seq: param.sequenceId,
+          date: new Date().toLocaleString('pt-BR') 
+        }
       }, '*');
     } catch (e) {
       console.error('[Tasy PDF] Geração falhou:', e.message);
