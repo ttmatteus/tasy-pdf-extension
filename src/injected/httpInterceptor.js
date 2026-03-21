@@ -1,137 +1,119 @@
 window.TasyPdf = window.TasyPdf || {};
 
 (function (ctx) {
-  ctx.running = false;
-  ctx.pendingRun = false;
   ctx.$httpGlobal = null;
 
+  let refreshTimer = null;
+  let refreshGen = 0;
+  let isGenerating = false;
+  let pendingGenerationCode = null;
+  let pendingGenerationGen = 0;
   let saveDebounceTimer = null;
   let initAttempts = 0;
 
-  ctx.runAfterSave = async function () {
-    if (ctx.running) {
-      ctx.pendingRun = true;
-      return;
+  ctx.scheduleRefresh = function (code, delay) {
+    if (delay === undefined) delay = 400;
+    clearTimeout(refreshTimer);
+    const myGen = ++refreshGen;
+    if (delay === 0) {
+      ctx._doGenerate(code, myGen);
+    } else {
+      refreshTimer = setTimeout(() => ctx._doGenerate(code, myGen), delay);
     }
-    if (!ctx.$httpGlobal) {
-      console.warn('[Tasy PDF] Operação abortada: Dependências Angular ainda não prontas.');
+  };
+
+  ctx._doGenerate = async function (code, gen) {
+    if (isGenerating) {
+      pendingGenerationCode = code;
+      pendingGenerationGen = gen;
       return;
     }
 
-    ctx.running = true;
+    // Se já existe uma geração mais recente agendada/chamada, descarta esta logo no início
+    if (gen !== refreshGen) return;
 
+    isGenerating = true;
+    const http = ctx.getHttpService ? ctx.getHttpService() : ctx.$httpGlobal;
+    if (!http) return;
     try {
-      const reportInfo = ctx.getReportCodeFromScope();
-      console.log('[Tasy PDF] runAfterSave triggered. Scope code:', reportInfo?.code);
-      if (!reportInfo) return;
-
-      let param = ctx.getCachedReportParam();
-      if (!param || param.code !== reportInfo.code) {
-        const r1 = await ctx.$httpGlobal.post(
+      let param = reportParamCache[code];
+      if (!param) {
+        const r1 = await http.post(
           '/TasyAppServer/resources/service/Report/getReportsData',
-          ctx.buildReportsDataBody(reportInfo.code, reportInfo.type)
+          ctx.buildReportsDataBody(code, 'CMCZ')
         );
-
         param = r1.data?.reports?.[0];
-        ctx.setCachedReportParam(param);
-        if (!param) {
-          throw new Error('relatório não encontrado em getReportsData');
-        }
+        if (param) reportParamCache[code] = param;
       }
+      if (!param) return;
 
-      const r2 = await ctx.$httpGlobal.post(
+      const r2 = await http.post(
         '/TasyAppServer/resources/service/Report/generateReports',
         ctx.buildGenerateBody(param)
       );
 
+      if (gen !== refreshGen) return; // stale — uma geração mais recente já existe
+
       const pdfFileName = r2.data?.reports?.[0]?.pdfFileName;
-      if (!pdfFileName) throw new Error('pdfFileName não encontrado');
-
+      if (!pdfFileName) return;
       const pdfUrl = '/TasyAppServer/resources/files/pdf/' + pdfFileName;
-
-      // Chama a UI do Drawer
       ctx.updateOrOpenPreview(pdfUrl);
 
-      // Despacha p/ ContentScript salvar histórico
+      // Adiciona ao histórico (com SeqId do main)
       window.postMessage({
         type: 'TASY_PDF_HISTORY_ADD',
-        payload: {
-          url: pdfUrl,
-          code: reportInfo.code,
+        payload: { 
+          url: pdfUrl, 
+          code: code, 
           seq: param.sequenceId,
-          date: new Date().toLocaleString('pt-BR')
+          date: new Date().toLocaleString('pt-BR') 
         }
       }, '*');
-
     } catch (e) {
-      console.log('[Erro]', e.message);
+      console.error('[Tasy PDF] Geração falhou:', e.message);
     } finally {
-      ctx.running = false;
-
-      if (ctx.pendingRun) {
-        ctx.pendingRun = false;
-        setTimeout(() => ctx.runAfterSave(), 0);
+      isGenerating = false;
+      if (pendingGenerationCode) {
+        const nextCode = pendingGenerationCode;
+        const nextGen = pendingGenerationGen;
+        pendingGenerationCode = null;
+        pendingGenerationGen = 0;
+        // Roda a próxima da fila se não for stale
+        if (nextGen === refreshGen) {
+           ctx._doGenerate(nextCode, nextGen);
+        }
       }
     }
   };
 
-  ctx.generateManualPdf = async function (code) {
-    if (ctx.running) {
-       console.log('[Tasy PDF] generateManualPdf bailing: already running. Setting pending.');
-       ctx.pendingRun = true;
-       return;
-    }
-    if (!ctx.$httpGlobal) {
+  ctx.cancelPendingGeneration = function () {
+    clearTimeout(refreshTimer);
+    refreshGen++; // invalida qualquer geração em voo
+    pendingGenerationCode = null; // limpa a fila
+  };
+
+  // runAfterSave: mantido para compatibilidade com o interceptor de $http.post
+  ctx.runAfterSave = function () {
+    const reportInfo = ctx.getReportCodeFromScope ? ctx.getReportCodeFromScope() : null;
+    if (!reportInfo) return;
+    ctx.scheduleRefresh(reportInfo.code);
+  };
+
+  let reportParamCache = {};
+
+  ctx.generateManualPdf = function (code) {
+    if (!ctx.getHttpService()) {
       if (ctx.showToast) ctx.showToast('A extensão ainda não identificou o Angular.', 'error');
-      console.warn('[Tasy PDF] Operação manual abortada: Angular não pronto.');
       return;
     }
-
-    ctx.running = true;
-    if (ctx.showToast) ctx.showToast(`Gerando relatório ${code}...`, 'info');
-
-    try {
-      const r1 = await ctx.$httpGlobal.post(
-        '/TasyAppServer/resources/service/Report/getReportsData',
-        ctx.buildReportsDataBody(code, 'CMCZ')
-      );
-
-      const param = r1.data?.reports?.[0];
-      if (!param) throw new Error('Código inexistente no banco');
-
-      const r2 = await ctx.$httpGlobal.post(
-        '/TasyAppServer/resources/service/Report/generateReports',
-        ctx.buildGenerateBody(param)
-      );
-
-      const pdfFileName = r2.data?.reports?.[0]?.pdfFileName;
-      if (!pdfFileName) throw new Error('Falha ao instanciar URL de PDF');
-
-      const pdfUrl = '/TasyAppServer/resources/files/pdf/' + pdfFileName;
-
-      ctx.updateOrOpenPreview(pdfUrl);
-      if (ctx.showToast) ctx.showToast(`Relatório ${code} gerado na tela!`, 'success');
-
-      window.postMessage({
-        type: 'TASY_PDF_HISTORY_ADD',
-        payload: {
-          url: pdfUrl,
-          code: code,
-          seq: param?.sequenceId,
-          date: new Date().toLocaleString('pt-BR')
-        }
-      }, '*');
-    } catch (err) {
-      if (ctx.showToast) ctx.showToast(`Erro: ${err.message}`, 'error');
-      console.error('[Tasy Manual Preview Failed]', err);
-    } finally {
-      ctx.running = false;
-    }
+    ctx.scheduleRefresh(code, 0);
   };
 
   ctx.checkExactReportFallback = async function (code) {
+    const http = ctx.getHttpService();
+    if (!http) return [];
     try {
-      const r = await ctx.$httpGlobal.post(
+      const r = await http.post(
         '/TasyAppServer/resources/service/Report/getReportsData',
         ctx.buildReportsDataBody(Number(code), 'CMCZ')
       );
@@ -141,8 +123,29 @@ window.TasyPdf = window.TasyPdf || {};
     return [];
   };
 
-  ctx.prefetchAllReports = async function () {
-    if (ctx.allReports) return;
+  ctx.prefetchAllReports = async function (force = false) {
+    const CACHE_KEY = 'tasy_pdf_reports_cache';
+    const CACHE_TTL = 3600000; // 1 hora
+
+    if (!force) {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const { timestamp, data } = JSON.parse(cached);
+          if (Date.now() - timestamp < CACHE_TTL) {
+            ctx.allReports = data;
+            console.log('[Tasy PDF] Relatórios carregados do cache local (Domínio:', data.length, 'itens)');
+            return;
+          }
+        } catch (e) {
+          localStorage.removeItem(CACHE_KEY);
+        }
+      }
+    }
+
+    if (ctx.prefetching) return;
+    ctx.prefetching = true;
+
     try {
       const payload = [{
         "tipo": "RequisicaoDataSource",
@@ -188,7 +191,7 @@ window.TasyPdf = window.TasyPdf || {};
         "saveOrderBy": true
       }];
 
-      const r = await ctx.$httpGlobal.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
+      const r = await http.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
 
       function extractList(obj) {
         if (Array.isArray(obj) && obj.length > 0 && obj[0].CD_RELATORIO !== undefined) return obj;
@@ -203,18 +206,26 @@ window.TasyPdf = window.TasyPdf || {};
 
       const list = extractList(r.data);
       if (list) {
-        // Garantia dupla local, se o banco ignorar o filtro
         ctx.allReports = list.filter(r => r.IE_TIPO_RELATORIO === 'CMCZ');
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          timestamp: Date.now(),
+          data: ctx.allReports
+        }));
+        console.log('[Tasy PDF] Cache de relatórios atualizado:', ctx.allReports.length, 'itens');
       }
     } catch (e) {
       console.warn('[Tasy PDF] Erro ao cachear relatórios. Usando fallback via rede (debounced).', e);
+    } finally {
+      ctx.prefetching = false;
     }
   };
 
   ctx.fetchBands = async function (nrSeqRelatorio) {
     if (!nrSeqRelatorio) throw new Error("PK (NR_SEQUENCIA) ausente no cache do relatório.");
     const payload = [{ "tipo": "RequisicaoDataSource", "@class": "br.com.wheb.vo.componentes.metaData.RequisicaoDataSource", "page": 1, "fieldActivators": {}, "selectFirstRecord": true, "paramsByName": { "_schematicObjCode": 1037907, "NR_SEQ_RELATORIO": Number(nrSeqRelatorio), "isToReloadActivationParameters": true, "cdSetorAtendimento": 0 }, "legendDef": {}, "functionVariables": {}, "tableName": "BANDA_RELATORIO", "nrSeqVisao": 96201, "nrSeqAtivacao": 57005, "featureCode": 260, "tableDescription": "BANDA_RELATORIO_260_96201_dg", "schematicsObj": 1037907, "tipoAtivacao": 3, "inicioPagina": 1, "qtRegistrosPagina": 20, "qtMaxRegistros": 0, "unificarCountRegistros": false, "withoutCache": false, "allAttributes": ["IE_ALTERNA_COR_FUNDO", "DS_OBSERVACAO", "DS_COR_HEADER", "DS_REGRA", "QT_ALTURA", "DS_EXPRESSAO", "IE_FUNDO_TRANSPARENTE", "QT_MAX_REGISTRO", "IE_BORDA_ESQ", "IE_IMPRIME_VAZIO", "IE_SITUACAO", "DS_COR_FOOTER", "IE_BORDA_SUP", "IE_BORDA_DIR", "IE_BANDA_PADRAO", "IE_QUEBRA_PAGINA", "NR_SEQ_RELATORIO", "DT_ATUALIZACAO", "DS_BANDA_SUPERIORA", "NR_SEQ_BANDA_SUPERIOR", "IE_TIPO_BANDA", "NM_USUARIO", "DS_COR_QUEBRA", "NM_TABELA", "DS_BANDA", "IE_IMPRIME_PRIMEIRO", "IE_BORDA_INF", "NR_SEQUENCIA", "DS_SQL", "IE_DIRECTION", "DS_COR_FUNDO", "IE_REIMPRIME_NOVA_PAGINA", "NR_SEQ_APRESENTACAO"], "ieLibera": false, "isAutomaticPagination": true, "saveOrderBy": true }];
-    const r = await ctx.$httpGlobal.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
+    const http = ctx.getHttpService();
+    if (!http) throw new Error("Angular não está pronto.");
+    const r = await http.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
 
     let arr = r.data?.dados?.linhasResultSet;
     if (!arr && r.data?.dados?.DataSource) arr = r.data.dados.DataSource;
@@ -231,7 +242,9 @@ window.TasyPdf = window.TasyPdf || {};
   ctx.fetchFields = async function (nrSeqBanda) {
     if (!nrSeqBanda) throw new Error("PK (NR_SEQ_BANDA) ausente.");
     const payload = [{ "tipo": "RequisicaoDataSource", "@class": "br.com.wheb.vo.componentes.metaData.RequisicaoDataSource", "page": 1, "fieldActivators": {}, "selectFirstRecord": true, "paramsByName": { "_schematicObjCode": 1037895, "NR_SEQ_BANDA": Number(nrSeqBanda), "isToReloadActivationParameters": true, "cdSetorAtendimento": 0 }, "legendDef": {}, "functionVariables": {}, "tableName": "BANDA_RELAT_CAMPO", "nrSeqVisao": 96200, "nrSeqAtivacao": 57048, "featureCode": 260, "tableDescription": "BANDA_RELAT_CAMPO_260_96200_dg", "schematicsObj": 1037895, "tipoAtivacao": 3, "inicioPagina": 1, "qtRegistrosPagina": 150, "unificarCountRegistros": false, "withoutCache": false, "allAttributes": ["NR_SEQUENCIA", "NR_SEQ_BANDA", "DS_CAMPO", "DS_LABEL", "DS_CONTEUDO", "QT_ALTURA", "QT_TAMANHO", "QT_TOPO", "QT_ESQUERDA", "QT_TAM_FONTE", "DS_COR_FONTE", "DS_TIPO_FONTE", "DS_ESTILO_FONTE", "NM_ATRIBUTO", "IE_TIPO_CAMPO", "IE_ALINHAMENTO", "DS_ALINHAMENTO", "IE_BORDA_ESQ", "IE_BORDA_SUP", "IE_BORDA_DIR", "IE_BORDA_INF", "DS_COR_FUNDO", "DS_COR_LABEL", "IE_FUNDO_TRANSPARENTE", "IE_AJUSTAR_TAMANHO", "IE_TRANSPARENTE", "IE_SITUACAO", "DT_ATUALIZACAO", "NM_USUARIO"], "ieLibera": false, "isAutomaticPagination": true, "saveOrderBy": true }];
-    const r = await ctx.$httpGlobal.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
+    const http = ctx.getHttpService();
+    if (!http) throw new Error("Angular não está pronto.");
+    const r = await http.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
 
     let arr = r.data?.dados?.linhasResultSet;
     if (!arr && r.data?.dados?.DataSource) arr = r.data.dados.DataSource;
@@ -245,7 +258,8 @@ window.TasyPdf = window.TasyPdf || {};
   ctx.updateFieldObj = async function (oldObj, newObj) {
     // Garante que os campos de cor estão presentes explicitamente no DTO
     newObj.DS_COR_FUNDO = newObj.DS_COR_FUNDO !== undefined ? newObj.DS_COR_FUNDO : (oldObj.DS_COR_FUNDO || null);
-    // NOTA: IE_FUNDO_TRANSPARENTE NÃO EXISTE em BANDA_RELAT_CAMPO (só em BANDA_RELATORIO) - não enviar
+    newObj.DS_COR_FONTE = newObj.DS_COR_FONTE !== undefined ? newObj.DS_COR_FONTE : (oldObj.DS_COR_FONTE || null);
+    newObj.DS_COR_LABEL = newObj.DS_COR_LABEL !== undefined ? newObj.DS_COR_LABEL : (oldObj.DS_COR_LABEL || null);
     newObj.IE_TRANSPARENTE = newObj.IE_TRANSPARENTE !== undefined ? newObj.IE_TRANSPARENTE : (oldObj.IE_TRANSPARENTE || 'N');
 
     // Converte cores HTML → Delphi BGR antes de mandar pro Tasy
@@ -257,13 +271,10 @@ window.TasyPdf = window.TasyPdf || {};
       { "tipo": "RequisicaoDataSource", "@class": "br.com.wheb.vo.componentes.metaData.RequisicaoDataSource", "tableName": "BANDA_RELAT_CAMPO", "nrSeqVisao": 96200, "featureCode": 260, "schematicsObj": 1037895 },
       { "tipo": "dsActionParams", "valor": { "acao": "UPDATE", "shouldClean": true, "registro": newObj, "registroOld": oldObj } }
     ];
-    console.log('[Tasy Studio] DTO enviado:', JSON.stringify({ DS_COR_FUNDO: newObj.DS_COR_FUNDO, IE_TRANSPARENTE: newObj.IE_TRANSPARENTE }));
-    const r = await ctx.$httpGlobal.post('/TasyAppServer/resources/service/WebNativeDataSource/performAction', payload);
-    console.log('[Tasy Studio] performAction resposta:', r.data);
-    return r;
+    const http = ctx.getHttpService();
+    if (!http) throw new Error("Angular não está pronto.");
+    return http.post('/TasyAppServer/resources/service/WebNativeDataSource/performAction', payload);
   };
-
-
 
   // Converte HTML hex (#RRGGBB) → Delphi BGR ($00BBGGRR)
   // Se já for formato Tasy (clXxx ou $...) retorna sem alterar.
@@ -306,34 +317,46 @@ window.TasyPdf = window.TasyPdf || {};
     saveDebounceTimer = setTimeout(() => ctx.runAfterSave(), 0);
   };
 
+  ctx.getHttpService = function () {
+    if (ctx.$httpGlobal) return ctx.$httpGlobal;
+    if (typeof angular === 'undefined') return null;
+
+    // Busca o injector de forma agressiva em vários elementos comuns no Tasy
+    const targets = ['[ng-app]', '#tasy-main', 'body', '.ng-scope'];
+    for (const sel of targets) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const injector = angular.element(el).injector();
+        if (injector) {
+          ctx.$httpGlobal = injector.get('$http');
+          console.log('[Tasy PDF] Angular $http encontrado via:', sel);
+          return ctx.$httpGlobal;
+        }
+      }
+    }
+    return null;
+  };
+
   ctx.initAngularDependencies = function () {
-    if (typeof angular === 'undefined') {
-      if (++initAttempts > 120) {
-        console.warn('[Tasy PDF] Angular timeout - abandoning initialization.');
-        return;
-      } // Fail smoothly on non-tasy sites       
-      setTimeout(ctx.initAngularDependencies, 500);
+    if (!ctx.getHttpService()) {
+      if (++initAttempts > 30) {
+          console.warn('[Tasy PDF] Desistindo de encontrar Angular após 30 tentativas.');
+          return;
+      }
+      setTimeout(ctx.initAngularDependencies, 1000);
       return;
     }
 
-    const injector = angular.element(document.body).injector();
-    if (!injector) {
-      if (++initAttempts > 120) {
-        console.warn('[Tasy PDF] Angular timeout - abandoning initialization.');
-        return;
-      }
-    }
+    // Se já foi inicializado (post já é o nosso), não re-adiciona o wrapper
+    if (ctx.$httpGlobal.post.__tasyWrapped) return;
 
-    ctx.$httpGlobal = injector.get('$http');
     const _oldPost = ctx.$httpGlobal.post.bind(ctx.$httpGlobal);
-
     ctx.$httpGlobal.post = function (url, data, config) {
       const promise = _oldPost(url, data, config);
 
       if (url.includes('WebNativeDataSource/performAction') || url.includes('saveInlineEdit')) {
         promise.then(res => {
           const acao = res.data?.dados?.acao;
-          // saveInlineEdit não passa obrigatoriamente por acao=UPDATE, então podemos verificar a URL também.
           if (acao === 'UPDATE' || acao === 'INSERT' || url.includes('saveInlineEdit')) {
             ctx.triggerDebounced();
           }
@@ -342,16 +365,10 @@ window.TasyPdf = window.TasyPdf || {};
 
       return promise;
     };
+    ctx.$httpGlobal.post.__tasyWrapped = true;
 
     ctx.startPrefetchRoutine();
 
-    // Apenas prefetcha se for usar a Spotlight (ou para cache de uso geral)
-    if (ctx.prefs.spotlightSearch !== false) {
-      ctx.prefetchAllReports();
-    }
-
-    // Como o angular e $http carregaram com sucesso nesta aba/frame:
-    if (ctx.injectFloatingActionButton) ctx.injectFloatingActionButton();
     if (ctx.prefs.spotlightSearch !== false && ctx.injectSpotlightSearch) {
       ctx.injectSpotlightSearch();
     }
