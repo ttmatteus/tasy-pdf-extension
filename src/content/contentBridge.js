@@ -13,15 +13,34 @@ window.addEventListener('message', (event) => {
 
     chrome.storage.local.get({ pdfHistory: [] }, (res) => {
       let history = res.pdfHistory;
+      
+      // Remove o código se já existir (para manter sempre o mais recente no topo do array)
+      if (payload.code) {
+         history = history.filter(h => h.code !== payload.code);
+      }
+      
       history.unshift(payload);
 
-      // Mantém os top 8 mais recentes
+      // Mantém os top 8 mais recentes exclusivos
       if (history.length > 8) {
         history = history.slice(0, 8);
       }
 
       chrome.storage.local.set({ pdfHistory: history });
     });
+  }
+
+  if (event.data && event.data.type === 'TASY_PDF_HISTORY_GET') {
+    chrome.storage.local.get({ pdfHistory: [] }, (res) => {
+      window.postMessage({
+        type: 'TASY_PDF_HISTORY_DATA',
+        payload: res.pdfHistory
+      }, '*');
+    });
+  }
+
+  if (event.data && event.data.type === 'TASY_PDF_HISTORY_CLEAR') {
+    chrome.storage.local.set({ pdfHistory: [] });
   }
 });
 

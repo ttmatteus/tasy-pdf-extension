@@ -3,7 +3,6 @@ window.TasyPdf = window.TasyPdf || {};
 (function (ctx) {
   ctx.$httpGlobal = null;
 
-  // AbortQueue: monotonically-increasing counter cancels stale PDF generations
   let refreshTimer = null;
   let refreshGen = 0;
   let isGenerating = false;
@@ -12,8 +11,6 @@ window.TasyPdf = window.TasyPdf || {};
   let saveDebounceTimer = null;
   let initAttempts = 0;
 
-  // Schedules a PDF refresh, cancelling any pending one.
-  // delay=0 starts immediately (used when firing in parallel with save).
   ctx.scheduleRefresh = function (code, delay) {
     if (delay === undefined) delay = 400;
     clearTimeout(refreshTimer);
@@ -118,7 +115,7 @@ window.TasyPdf = window.TasyPdf || {};
     try {
       const r = await http.post(
         '/TasyAppServer/resources/service/Report/getReportsData',
-        ctx.buildReportsDataBody(code, 'CMCZ')
+        ctx.buildReportsDataBody(Number(code), 'CMCZ')
       );
       const p = r.data?.reports?.[0];
       if (p) return [{ CD_RELATORIO: p.code, DS_TITULO: p.title || 'Relatório sem Título', NR_SEQUENCIA: p.sequenceId }];

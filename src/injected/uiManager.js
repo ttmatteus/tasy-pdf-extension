@@ -178,7 +178,9 @@ window.TasyPdf = window.TasyPdf || {};
          band: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>',
          field: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>',
          save: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
-         arrowLeft: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>'
+         arrowLeft: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>',
+         history: '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>',
+         trash: '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
       };
 
       nav.innerHTML = `
@@ -224,6 +226,23 @@ window.TasyPdf = window.TasyPdf || {};
       const edTitle = document.getElementById('tasy-ed-title');
       const edBack = document.getElementById('tasy-ed-btn-back');
       const edPreview = document.getElementById('tasy-ed-btn-preview');
+      
+      let historyData = [];
+
+      window.addEventListener('message', (e) => {
+         if (e.data && e.data.type === 'TASY_PDF_HISTORY_DATA') {
+            historyData = e.data.payload || [];
+            if (input.value.trim() === '' && edState.level === 0) {
+               renderHistory();
+            }
+         }
+      });
+
+      const requestHistory = () => {
+         window.postMessage({ type: 'TASY_PDF_HISTORY_GET' }, '*');
+      };
+
+      requestHistory();
 
       const collapseSearch = () => {
          ctx.removeGhostField();
@@ -235,6 +254,19 @@ window.TasyPdf = window.TasyPdf || {};
       };
 
       const expandSearch = () => {
+         // Se já está aberto e no nível de busca (não editor), evita re-renderizar pra não quebrar o evento de clique
+         const isSearchOpen = nav.style.opacity === '1';
+         const isNavIdle = edState.level === 0 && input.value.trim() === '';
+
+         if (isSearchOpen) {
+             nav.style.transform = 'translateX(-50%) scale(1)';
+             if (isNavIdle && results.innerHTML === '') {
+                 renderHistory();
+             }
+             return; 
+         }
+
+         console.log('[Tasy PDF] Spotlight Expanding...');
          nav.style.opacity = '1';
          nav.style.transform = 'translateX(-50%) scale(1)';
          if (edState.level > 0) {
@@ -244,6 +276,10 @@ window.TasyPdf = window.TasyPdf || {};
          } else if (input.value.trim() !== '') {
             results.style.display = 'block';
             document.getElementById('tasy-nav-header').style.display = 'flex';
+         } else {
+            // Se vazio, mostra historico
+            requestHistory();
+            renderHistory();
          }
       };
 
@@ -370,7 +406,29 @@ window.TasyPdf = window.TasyPdf || {};
 
       results.addEventListener('click', (e) => {
          const item = e.target.closest('.tasy-res-item');
+         
+         // Botão de Limpar Histórico
+         if (e.target.closest('#tasy-btn-hist-clear')) {
+            renderClearConfirm();
+            return;
+         }
+
+         // Confirmação de Limpeza - SIM
+         if (e.target.closest('#tasy-btn-confirm-clear-yes')) {
+            window.postMessage({ type: 'TASY_PDF_HISTORY_CLEAR' }, '*');
+            historyData = [];
+            renderHistory();
+            return;
+         }
+
+         // Confirmação de Limpeza - NÃO
+         if (e.target.closest('#tasy-btn-confirm-clear-no')) {
+            renderHistory();
+            return;
+         }
+
          if (!item) return;
+
          const code = item.getAttribute('data-code');
          const seq = item.getAttribute('data-seq');
          if (e.target.closest('.tasy-btn-gen')) {
@@ -379,6 +437,15 @@ window.TasyPdf = window.TasyPdf || {};
          } else if (e.target.closest('.tasy-btn-edit')) {
             edState.level = 1; edState.reportCode = code; edState.reportSeq = seq;
             loadBandsUI();
+            return;
+         }
+
+         // GERAÇÃO DE PDF: Se clicou no botão de Gerar OU se clicou no item de histórico (mas não no botão de editar)
+         if (e.target.closest('.tasy-btn-gen') || item.classList.contains('tasy-hist-item')) {
+            closeNav();
+            console.log('[Tasy PDF] Generating PDF for:', code);
+            if (ctx.generateManualPdf) ctx.generateManualPdf(code);
+            return;
          }
       });
 
@@ -552,12 +619,6 @@ window.TasyPdf = window.TasyPdf || {};
          const pdfLoading = document.getElementById('tasy-pdf-loading');
          let saveTimer = null;
 
-         // ── FIX RAIZ: o updateFieldObj do Tasy converte "" → "N" internamente.
-         // A solução é nunca mandar "" — a opção "sem estilo" deve ser null (valor nativo do banco).
-         // Regra:  select value ""        → null   (sem estilo = null no banco)
-         //         select value "B"/"I"/"BI" → valor literal
-         //         select value "E"/"C"/"D"  → valor literal (alinhamento)
-         //         select value "" (align)   → null
          const selectToDb = (val) => val === '' ? null : val;
 
          let lastSavedObj = { ...f };
@@ -683,6 +744,34 @@ window.TasyPdf = window.TasyPdf || {};
             bgColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(bgColorText.value) : '#ffffff';
             bgColorPicker.addEventListener('change', (e) => { bgColorText.value = e.target.value.toUpperCase(); enqueueAndSave(); });
          }
+
+         // LÓGICA REVERTER (UNDO/SNAPSHOT)
+         document.getElementById('ed-btn-revert').addEventListener('click', () => {
+            const s = edState.fieldSnapshot;
+            if (!s) return;
+
+            document.getElementById('ed-inp-left').value = s.QT_ESQUERDA || 0;
+            document.getElementById('ed-inp-top').value = s.QT_TOPO || 0;
+            document.getElementById('ed-inp-width').value = s.QT_TAMANHO || 0;
+            document.getElementById('ed-inp-height').value = s.QT_ALTURA || 0;
+            document.getElementById('ed-inp-fontsize').value = s.QT_TAM_FONTE || 0;
+            document.getElementById('ed-inp-text').value = s.DS_CONTEUDO || '';
+            document.getElementById('ed-inp-fontcolor').value = s.DS_COR_FONTE || '';
+            document.getElementById('ed-inp-labelcolor').value = s.DS_COR_LABEL || '';
+            document.getElementById('ed-inp-align').value = s.IE_ALINHAMENTO || '';
+            document.getElementById('ed-inp-fontstyle').value = s.DS_ESTILO_FONTE || '';
+            document.getElementById('ed-chk-transp').checked = s.IE_TRANSPARENTE === 'S';
+            document.getElementById('ed-chk-borda-sup').checked = s.IE_BORDA_SUP === 'S';
+            document.getElementById('ed-chk-borda-inf').checked = s.IE_BORDA_INF === 'S';
+            document.getElementById('ed-chk-borda-esq').checked = s.IE_BORDA_ESQ === 'S';
+            document.getElementById('ed-chk-borda-dir').checked = s.IE_BORDA_DIR === 'S';
+
+            // Sync Pickers
+            colorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_FONTE) : '#000000';
+            labelPicker.value = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_LABEL) : '#ffffff';
+
+            if (ctx.showToast) ctx.showToast("Valores restaurados do Snapshot original!", "info");
+         });
 
          document.getElementById('ed-btn-save').addEventListener('click', async () => {
             const btn = document.getElementById('ed-btn-save');

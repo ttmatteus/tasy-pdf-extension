@@ -35,7 +35,7 @@ window.TasyPdf = window.TasyPdf || {};
         reports: [{
           '@class': 'br.com.philips.tasy.dto.shared.report.ReportParam',
           type,
-          code,
+          code: Number(code),
           parameters: { ADVF_DIMENSIONS: [] },
           customGenerate: false,
           printedCopies: 1,
