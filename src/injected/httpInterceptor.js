@@ -276,6 +276,367 @@ window.TasyPdf = window.TasyPdf || {};
     return http.post('/TasyAppServer/resources/service/WebNativeDataSource/performAction', payload);
   };
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Header de RequisicaoDataSource compartilhado — evita repetir o bloco
+  // gigante em insert, delete, clone e update tanto de campos quanto bandas.
+  // ─────────────────────────────────────────────────────────────────────────
+  function buildDatasourceHeader(tableName, opts) {
+    const CAMPO = {
+      schematicsObj: 1037895, nrSeqVisao: 96200, nrSeqAtivacao: 57048,
+      tableDescription: 'BANDA_RELAT_CAMPO_260_96200_dg',
+      paramKey: 'NR_SEQ_BANDA',
+      allAttributes: [
+        'DS_MASCARA','IE_HUMANO_BARCODE','DS_OBSERVACAO','NR_SEQ_LOGO',
+        'IE_ZERA_APOS_IMPRIMIR','QT_ALTURA','DS_EXPRESSAO','IE_TRANSPARENTE',
+        'IE_CAMPO_QUEBRA','PR_ALTURA_BARCODE','IE_INFO_PACIENTE','IE_BORDA_ESQ',
+        'IE_POSICAO_LEGENDA','QT_FONTE_BARCODE','DS_ESTILO_FONTE','IE_BORDA_DIR',
+        'IE_TIPO_BARCODE','DS_CONTEUDO_RICH','IE_MARCADOR','IE_TOTALIZAR',
+        'IE_ALINHAMENTO','IE_METODO_ESTENDER','IE_DATAMATRIX_MODULE','IE_TIPO_DESENHO',
+        'IE_TIPO_CAMPO','NM_TIME_ZONE_ATTRIBUTE','IE_SENSIVEL','DS_COR_LABEL',
+        'IE_BORDA_INF','NR_SEQUENCIA','DS_SQL','DS_COR_FUNDO','IE_ALTERA_VALOR',
+        'DS_ALINHAMENTO','IE_ESTENDER','QT_TAM_FONTE','DS_TEXTO_BARRAS','QT_TOPO',
+        'NR_SEQ_BANDA','QT_TAMANHO','NM_ATRIBUTO','DS_CONTEUDO','IE_ALINHAR_BANDA',
+        'IE_SITUACAO','IE_BORDA_SUP','DS_COR_FONTE','IE_DATE_TYPE','DS_TIPO_FONTE',
+        'IE_QUEBRA_PAGINA','IE_AJUSTAR_TAMANHO','DS_CAMPO','DT_ATUALIZACAO',
+        'QT_ESQUERDA','IE_TIPO_CHART','NM_USUARIO','QT_POS_ESQUERDA','DS_LABEL',
+        'NR_SEQ_APRESENTACAO'
+      ]
+    };
+    const BANDA = {
+      schematicsObj: 1037907, nrSeqVisao: 96201, nrSeqAtivacao: 57005,
+      tableDescription: 'BANDA_RELATORIO_260_96201_dg',
+      paramKey: 'NR_SEQ_RELATORIO',
+      allAttributes: [
+        'IE_ALTERNA_COR_FUNDO','DS_OBSERVACAO','DS_COR_HEADER','DS_REGRA',
+        'QT_ALTURA','DS_EXPRESSAO','IE_FUNDO_TRANSPARENTE','QT_MAX_REGISTRO',
+        'IE_BORDA_ESQ','IE_IMPRIME_VAZIO','IE_SITUACAO','DS_COR_FOOTER',
+        'IE_BORDA_SUP','IE_BORDA_DIR','IE_BANDA_PADRAO','IE_QUEBRA_PAGINA',
+        'NR_SEQ_RELATORIO','DT_ATUALIZACAO','DS_BANDA_SUPERIORA',
+        'NR_SEQ_BANDA_SUPERIOR','IE_TIPO_BANDA','NM_USUARIO','DS_COR_QUEBRA',
+        'NM_TABELA','DS_BANDA','IE_IMPRIME_PRIMEIRO','IE_BORDA_INF','NR_SEQUENCIA',
+        'DS_SQL','IE_DIRECTION','DS_COR_FUNDO','IE_REIMPRIME_NOVA_PAGINA',
+        'NR_SEQ_APRESENTACAO'
+      ]
+    };
+    const meta = tableName === 'BANDA_RELATORIO' ? BANDA : CAMPO;
+    return {
+      'tipo': 'RequisicaoDataSource',
+      '@class': 'br.com.wheb.vo.componentes.metaData.RequisicaoDataSource',
+      'page': 1,
+      'fieldActivators': {},
+      'selectFirstRecord': true,
+      'paramsByName': {
+        '_schematicObjCode': meta.schematicsObj,
+        [meta.paramKey]: Number(opts.pkValue),
+        'isToReloadActivationParameters': true,
+        'cdSetorAtendimento': 0
+      },
+      'legendDef': {},
+      'functionVariables': {},
+      'tableName': tableName,
+      'nrSeqVisao': meta.nrSeqVisao,
+      'nrSeqAtivacao': meta.nrSeqAtivacao,
+      'featureCode': 260,
+      'tableDescription': meta.tableDescription,
+      'schematicsObj': meta.schematicsObj,
+      'tipoAtivacao': 3,
+      'inicioPagina': opts.inicioPagina !== undefined ? opts.inicioPagina : 1,
+      'qtRegistrosPagina': 150,
+      'qtMaxRegistros': 0,
+      'unificarCountRegistros': false,
+      'withoutCache': false,
+      'allAttributes': meta.allAttributes,
+      'ieLibera': false,
+      'isAutomaticPagination': true,
+      'saveOrderBy': true,
+      'utilizaInfiniteScroll': false
+    };
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // HELPER interno: executa NEW_RECORD → INSERT para qualquer tabela.
+  // Usado por insertFieldObj e insertBandObj.
+  // ─────────────────────────────────────────────────────────────────────────
+  async function performInsert(tableName, pkValue, overrides, fieldDefaults) {
+    const http = ctx.getHttpService();
+    if (!http) throw new Error('Angular não está pronto.');
+
+    const headerNew = buildDatasourceHeader(tableName, { pkValue });
+
+    // Passo 1 — NEW_RECORD: servidor devolve template com defaults
+    const r1 = await http.post(
+      '/TasyAppServer/resources/service/WebNativeDataSource/performAction',
+      [headerNew, { 'tipo': 'dsActionParams', 'valor': { 'acao': 'NEW_RECORD', 'aborted': false, 'isSaveAndAdd': false, 'msgCode': '' } }],
+      { suppressError: true, ignoreError: true }
+    );
+    const template = r1.data?.dados?.registro || r1.data?.dados?.registros?.[0] || r1.data?.dados;
+    if (!template || !template.NR_SEQUENCIA) {
+      throw new Error('[performInsert] NEW_RECORD não devolveu template. Dump: ' + JSON.stringify(r1.data));
+    }
+
+    // Passo 2 — monta registro final: template + defaults fixos + overrides do caller
+    const registroOld = { ...template, _NEW_RECORD: true };
+    const registro = { ...template, ...fieldDefaults, ...overrides };
+
+    const headerIns = buildDatasourceHeader(tableName, { pkValue });
+    const r2 = await http.post(
+      '/TasyAppServer/resources/service/WebNativeDataSource/performAction',
+      [
+        headerIns,
+        {
+          'tipo': 'dsActionParams',
+          'valor': {
+            'acao': 'INSERT', 'shouldClean': true,
+            'registro': registro, 'registroOld': registroOld,
+            'camposLog': {}, 'attachedFile': {},
+            'aborted': false, 'isSaveAndAdd': false, 'msgCode': ''
+          }
+        }
+      ],
+      { suppressError: true, ignoreError: true }
+    );
+    const saved = r2.data?.dados?.registro || r2.data?.dados?.registros?.[0] || registro;
+    console.log('[Tasy PDF] INSERT OK —', tableName, '— NR_SEQUENCIA:', saved.NR_SEQUENCIA);
+    return saved;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // HELPER: sanitiza um objeto antes de mandar pro Tasy.
+  // Remove campos do frontend (_hashCode, PAGING_RN, FRAMEWORK_ORDER_INDEX, etc.)
+  // e converte DT_ATUALIZACAO para o formato java.time.Instant esperado pelo servidor.
+  // ─────────────────────────────────────────────────────────────────────────
+  const FRONTEND_FIELDS = new Set([
+    '_hashCode', 'PAGING_RN', 'FRAMEWORK_ORDER_INDEX',
+  ]);
+
+  function sanitizeForServer(obj) {
+    const out = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (FRONTEND_FIELDS.has(k)) continue;
+      if (k === 'DT_ATUALIZACAO' && v) {
+        // Já no formato correto
+        if (typeof v === 'object' && v['@class'] === 'java.time.Instant') {
+          out[k] = v;
+        } else {
+          // Garante que a string está em ISO 8601 — o servidor rejeita qualquer outro formato
+          // Ex: "Sun Mar 22 2026 13:12:18 GMT-0300" → "2026-03-22T16:12:18.000Z"
+          let isoStr = String(v);
+          if (!isoStr.match(/^\d{4}-\d{2}-\d{2}T/)) {
+            // Não é ISO — tenta parsear via Date()
+            const parsed = new Date(isoStr);
+            isoStr = isNaN(parsed.getTime()) ? isoStr : parsed.toISOString();
+          }
+          out[k] = { '@class': 'java.time.Instant', 'type': 'INSTANT', 'value': isoStr };
+        }
+      } else {
+        out[k] = v;
+      }
+    }
+    return out;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // HELPER interno: executa DELETE para qualquer tabela.
+  // ─────────────────────────────────────────────────────────────────────────
+  async function performDelete(tableName, pkValue, obj) {
+    const http = ctx.getHttpService();
+    if (!http) throw new Error('Angular não está pronto.');
+    if (!obj?.NR_SEQUENCIA) throw new Error('[performDelete] obj sem NR_SEQUENCIA.');
+
+    const registro = sanitizeForServer(obj);
+    // records mantém _hashCode pois o sniffer mostrou que ele manda junto
+    const records  = [{ ...registro, _hashCode: obj._hashCode, PAGING_RN: obj.PAGING_RN }];
+
+    const header = buildDatasourceHeader(tableName, { pkValue, inicioPagina: 0 });
+    const body = JSON.stringify([
+      header,
+      {
+        'tipo': 'dsActionParams',
+        'valor': {
+          'acao': 'DELETE', 'shouldClean': true,
+          'registro': registro,
+          'registroOld': null,
+          'records': records,
+          'aborted': false, 'isSaveAndAdd': false, 'msgCode': ''
+        }
+      }
+    ]);
+
+    // Usa fetch nativo para ter controle total da resposta —
+    // o Angular $http explode com SyntaxError quando o servidor retorna texto puro.
+    const resp = await fetch('/TasyAppServer/resources/service/WebNativeDataSource/performAction', {
+      method: 'POST',
+      credentials: 'include',  // envia cookies de sessão do Tasy
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json, text/plain, */*' },
+      body
+    });
+
+    const raw = await resp.text();
+
+    if (!resp.ok) {
+      throw new Error('HTTP ' + resp.status + ': ' + raw.slice(0, 200));
+    }
+
+    // Tenta parsear como JSON — se falhar, o servidor mandou mensagem de erro em texto
+    let parsed;
+    try { parsed = JSON.parse(raw); } catch (_) {
+      throw new Error('Servidor retornou texto inesperado: ' + raw.slice(0, 300));
+    }
+
+    const dadosAcao = parsed?.dados?.acao;
+    if (dadosAcao && dadosAcao !== 'DELETE') {
+      throw new Error('Servidor rejeitou DELETE. Resposta: ' + JSON.stringify(parsed?.dados));
+    }
+
+    console.log('[Tasy PDF] DELETE OK —', tableName, '— NR_SEQUENCIA:', obj.NR_SEQUENCIA);
+  }
+  // ═══════════════════════════════════════════════════════════════════════
+  //  CAMPOS  (BANDA_RELAT_CAMPO)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Cria um campo em branco na banda nrSeqBanda.
+  // overrides: qualquer campo que queira definir antes de salvar.
+  // ex: { DS_CAMPO: 'NM_PACIENTE', QT_TOPO: 40, QT_ESQUERDA: 10 }
+  ctx.insertFieldObj = async function (nrSeqBanda, overrides = {}) {
+    return performInsert('BANDA_RELAT_CAMPO', nrSeqBanda, overrides, {
+      DS_CONTEUDO_RICH: '<html tasy="html5"><body><p style="text-align:left; font-size:12pt;"><span style="font-size:12pt;"></span></p></body></html>',
+      IE_TIPO_CAMPO: '1',
+      DS_SQL: '',
+      NM_ATRIBUTO: ''
+    });
+  };
+
+  // Deleta o campo. Precisa do objeto completo (como retornado por fetchFields).
+  ctx.deleteFieldObj = async function (fieldObj) {
+    return performDelete('BANDA_RELAT_CAMPO', fieldObj.NR_SEQ_BANDA, fieldObj);
+  };
+
+  // Clona um campo — cria cópia idêntica logo abaixo do original.
+  ctx.cloneFieldObj = async function (fieldObj) {
+    if (!fieldObj?.NR_SEQ_BANDA) throw new Error('[cloneFieldObj] fieldObj sem NR_SEQ_BANDA.');
+    const SKIP = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','QT_POS_ESQUERDA','DS_ALINHAMENTO','_hashCode','PAGING_RN']);
+    const overrides = {};
+    for (const [k, v] of Object.entries(fieldObj)) {
+      if (!SKIP.has(k)) overrides[k] = v;
+    }
+    overrides.QT_TOPO  = (Number(fieldObj.QT_TOPO)   || 0) + (Number(fieldObj.QT_ALTURA) || 17);
+    if (fieldObj.DS_CAMPO) overrides.DS_CAMPO = fieldObj.DS_CAMPO + '_COPIA';
+    const cloned = await ctx.insertFieldObj(fieldObj.NR_SEQ_BANDA, overrides);
+    console.log('[Tasy PDF] CLONE campo:', fieldObj.NR_SEQUENCIA, '→', cloned.NR_SEQUENCIA);
+    return cloned;
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════
+  //  BANDAS  (BANDA_RELATORIO)
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Cria uma banda no relatório nrSeqRelatorio.
+  // overrides: campos opcionais a definir antes de salvar.
+  // ex: { DS_BANDA: 'Cabeçalho Novo', IE_TIPO_BANDA: 'H', QT_ALTURA: 30 }
+  ctx.insertBandObj = async function (nrSeqRelatorio, overrides = {}) {
+    return performInsert('BANDA_RELATORIO', nrSeqRelatorio, overrides, {
+      IE_SITUACAO:            'A',
+      IE_TIPO_BANDA:          'D',   // D = Detalhe (tipo mais comum)
+      IE_BANDA_PADRAO:        'N',
+      IE_QUEBRA_PAGINA:       'N',
+      IE_IMPRIME_VAZIO:       'N',
+      IE_IMPRIME_PRIMEIRO:    'N',
+      IE_REIMPRIME_NOVA_PAGINA: 'N',
+      IE_FUNDO_TRANSPARENTE:  'S',
+      IE_ALTERNA_COR_FUNDO:   'N',
+      IE_BORDA_SUP:           'N',
+      IE_BORDA_INF:           'N',
+      IE_BORDA_ESQ:           'N',
+      IE_BORDA_DIR:           'N',
+      IE_DIRECTION:           'H',
+      DS_COR_FUNDO:           'clWhite',
+      DS_COR_HEADER:          'clWhite',
+      DS_COR_FOOTER:          'clWhite',
+      DS_COR_QUEBRA:          'clWhite',
+      QT_ALTURA:              20,
+      QT_MAX_REGISTRO:        0,
+      DS_SQL:                 '',
+      DS_BANDA:               overrides.DS_BANDA || 'Nova Banda'
+    });
+  };
+
+  // Deleta a banda. Precisa do objeto completo (como retornado por fetchBands).
+  // ⚠️  O Tasy bloqueia delete de banda que ainda tenha campos — use deleteBandWithFields.
+  ctx.deleteBandObj = async function (bandObj) {
+    return performDelete('BANDA_RELATORIO', bandObj.NR_SEQ_RELATORIO, bandObj);
+  };
+
+  // Deleta a banda E todos os seus campos (em sequência).
+  // Retorna { deletedFields: N }
+  ctx.deleteBandWithFields = async function (bandObj, onProgress) {
+    if (!bandObj?.NR_SEQUENCIA) throw new Error('[deleteBandWithFields] bandObj sem NR_SEQUENCIA.');
+
+    // 1. Busca todos os campos da banda
+    let fields = [];
+    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) {}
+
+    // 2. Deleta cada campo sequencialmente
+    for (let i = 0; i < fields.length; i++) {
+      if (onProgress) onProgress(i + 1, fields.length);
+      await ctx.deleteFieldObj(fields[i]);
+    }
+
+    // 3. Deleta a banda
+    await ctx.deleteBandObj(bandObj);
+
+    console.log('[Tasy PDF] deleteBandWithFields OK — banda:', bandObj.NR_SEQUENCIA, '| campos deletados:', fields.length);
+    return { deletedFields: fields.length };
+  };
+
+  // Clona uma banda inteira — cria cópia da banda E de todos os seus campos.
+  // Se fetchFields não retornar campos, clona só a banda.
+  ctx.cloneBandObj = async function (bandObj) {
+    if (!bandObj?.NR_SEQ_RELATORIO) throw new Error('[cloneBandObj] bandObj sem NR_SEQ_RELATORIO.');
+    const SKIP = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','_hashCode','PAGING_RN','NR_SEQ_APRESENTACAO']);
+
+    // Cria a banda clone
+    const bandOverrides = {};
+    for (const [k, v] of Object.entries(bandObj)) {
+      if (!SKIP.has(k)) bandOverrides[k] = v;
+    }
+    bandOverrides.DS_BANDA = (bandObj.DS_BANDA || 'Banda') + '_COPIA';
+    const newBand = await ctx.insertBandObj(bandObj.NR_SEQ_RELATORIO, bandOverrides);
+
+    // Clona os campos da banda original para a nova banda
+    let fields = [];
+    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) {}
+
+    const SKIP_FIELD = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','QT_POS_ESQUERDA','DS_ALINHAMENTO','_hashCode','PAGING_RN','NR_SEQ_BANDA']);
+    for (const f of fields) {
+      const fo = {};
+      for (const [k, v] of Object.entries(f)) {
+        if (!SKIP_FIELD.has(k)) fo[k] = v;
+      }
+      fo.NR_SEQ_BANDA = newBand.NR_SEQUENCIA;  // aponta pro clone
+      await ctx.insertFieldObj(newBand.NR_SEQUENCIA, fo);
+    }
+
+    console.log('[Tasy PDF] CLONE banda:', bandObj.NR_SEQUENCIA, '→', newBand.NR_SEQUENCIA, '| campos clonados:', fields.length);
+    return newBand;
+  };
+
+  // Atualiza campos de uma banda existente (equivalente ao updateFieldObj para campos).
+  // ex: await TasyPdf.updateBandObj(oldBand, { ...oldBand, QT_ALTURA: 40 })
+  ctx.updateBandObj = async function (oldObj, newObj) {
+    newObj.DS_COR_FUNDO   = ctx.hexToTasy(newObj.DS_COR_FUNDO   || oldObj.DS_COR_FUNDO);
+    newObj.DS_COR_HEADER  = ctx.hexToTasy(newObj.DS_COR_HEADER  || oldObj.DS_COR_HEADER);
+    newObj.DS_COR_FOOTER  = ctx.hexToTasy(newObj.DS_COR_FOOTER  || oldObj.DS_COR_FOOTER);
+    newObj.DS_COR_QUEBRA  = ctx.hexToTasy(newObj.DS_COR_QUEBRA  || oldObj.DS_COR_QUEBRA);
+
+    const header = buildDatasourceHeader('BANDA_RELATORIO', { pkValue: oldObj.NR_SEQ_RELATORIO });
+    const http = ctx.getHttpService();
+    if (!http) throw new Error('Angular não está pronto.');
+    return http.post(
+      '/TasyAppServer/resources/service/WebNativeDataSource/performAction',
+      [header, { 'tipo': 'dsActionParams', 'valor': { 'acao': 'UPDATE', 'shouldClean': true, 'registro': newObj, 'registroOld': oldObj } }]
+    );
+  };
+
   // Converte HTML hex (#RRGGBB) → Delphi BGR ($00BBGGRR)
   // Se já for formato Tasy (clXxx ou $...) retorna sem alterar.
   ctx.hexToTasy = function (hex) {
@@ -357,7 +718,7 @@ window.TasyPdf = window.TasyPdf || {};
       if (url.includes('WebNativeDataSource/performAction') || url.includes('saveInlineEdit')) {
         promise.then(res => {
           const acao = res.data?.dados?.acao;
-          if (acao === 'UPDATE' || acao === 'INSERT' || url.includes('saveInlineEdit')) {
+          if (acao === 'UPDATE' || acao === 'INSERT' || acao === 'DELETE' || url.includes('saveInlineEdit')) {
             ctx.triggerDebounced();
           }
         }).catch(() => { });
