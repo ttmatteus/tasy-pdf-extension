@@ -3,13 +3,12 @@ window.TasyPdf = window.TasyPdf || {};
 (function (ctx) {
    let previewWindow = null;
    let ghostField = null;
-   let ghostScale = 1.2; // Escala padrão um pouco maior para visibilidade
+   let ghostScale = 1.2;
 
    ctx.updateGhostField = () => { };
    ctx.removeGhostField = () => { };
 
    ctx.updateOrOpenPreview = function (pdfUrl) {
-      // 0. Double Buffering no Studio Fullscreen
       const iframeA = document.getElementById('tasy-pdf-iframe-A');
       const iframeB = document.getElementById('tasy-pdf-iframe-B');
 
@@ -216,7 +215,8 @@ window.TasyPdf = window.TasyPdf || {};
     `;
 
       document.body.appendChild(nav);
-       // [HIDE TOGGLE] Pill flutuante para esconder/mostrar o spotlight
+
+      // [HIDE TOGGLE] Pill flutuante para esconder/mostrar o spotlight
       const pill = document.createElement('div');
       pill.id = 'tasy-pdf-pill';
       pill.title = 'Minimizar / Reabrir Studio';
@@ -245,7 +245,6 @@ window.TasyPdf = window.TasyPdf || {};
       pill.addEventListener('click', () => {
          const isHidden = nav.style.display === 'none';
          if (isHidden) {
-
             nav.style.display = '';
             nav.style.opacity = '0';
             nav.style.transform = 'translateX(-50%) scale(0.96)';
@@ -254,13 +253,11 @@ window.TasyPdf = window.TasyPdf || {};
                nav.style.opacity = '0.7';
                nav.style.transform = 'translateX(-50%) scale(0.98)';
             });
-
             pill.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
             pill.style.color = '#475569';
             pill.style.borderColor = 'rgba(63,63,90,0.5)';
             pill.style.background = 'rgba(43,43,54,0.75)';
          } else {
-
             nav.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
             nav.style.opacity = '0';
             nav.style.transform = 'translateX(-50%) scale(0.95)';
@@ -294,7 +291,6 @@ window.TasyPdf = window.TasyPdf || {};
          hasMoved = true;
          const x = e.clientX - dragOffsetX;
          const y = e.clientY - dragOffsetY;
-         // Impede sair da tela
          const maxX = window.innerWidth  - pill.offsetWidth;
          const maxY = window.innerHeight - pill.offsetHeight;
          pill.style.left      = Math.max(0, Math.min(x, maxX)) + 'px';
@@ -309,7 +305,6 @@ window.TasyPdf = window.TasyPdf || {};
          pill.style.transition = 'all 0.2s';
       });
 
-      // Bloqueia o click se foi drag (não toggle)
       pill.addEventListener('click', (e) => {
          if (hasMoved) { hasMoved = false; e.stopImmediatePropagation(); }
       }, true);
@@ -336,7 +331,7 @@ window.TasyPdf = window.TasyPdf || {};
       const edBack = document.getElementById('tasy-ed-btn-back');
       const edPreview = document.getElementById('tasy-ed-btn-preview');
       const edExport = document.getElementById('tasy-ed-btn-export');
-      
+
       let historyData = [];
 
       window.addEventListener('message', (e) => {
@@ -364,7 +359,6 @@ window.TasyPdf = window.TasyPdf || {};
       };
 
       const expandSearch = () => {
-         // Se já está aberto e no nível de busca (não editor), evita re-renderizar pra não quebrar o evento de clique
          const isSearchOpen = nav.style.opacity === '1';
          const isNavIdle = edState.level === 0 && input.value.trim() === '';
 
@@ -373,7 +367,7 @@ window.TasyPdf = window.TasyPdf || {};
              if (isNavIdle && results.innerHTML === '') {
                  renderHistory();
              }
-             return; 
+             return;
          }
 
          console.log('[Tasy PDF] Spotlight Expanding...');
@@ -387,7 +381,6 @@ window.TasyPdf = window.TasyPdf || {};
             results.style.display = 'block';
             document.getElementById('tasy-nav-header').style.display = 'flex';
          } else {
-            // Se vazio, mostra historico
             requestHistory();
             renderHistory();
          }
@@ -419,6 +412,9 @@ window.TasyPdf = window.TasyPdf || {};
          fullReportData: null
       };
 
+      // [JANELA SEPARADA] Referência para a janela do editor de campo
+      let editorWindow = null;
+
       ctx.fetchFullReport = async function (reportSeq) {
          if (edState.fullReportData && edState.fullReportData.reportSeq === reportSeq) return edState.fullReportData;
          const bands = await ctx.fetchBands(reportSeq);
@@ -445,24 +441,15 @@ window.TasyPdf = window.TasyPdf || {};
             editor.style.display = 'none';
             if (input.value.trim() !== '') results.style.display = 'block';
          } else {
-            if (edState.level === 3) {
-               Object.assign(nav.style, {
-                  width: '100vw', height: '100vh', top: '0', left: '0',
-                  transform: 'none', borderRadius: '0', boxShadow: 'none'
-               });
-               Object.assign(editor.style, { padding: '10px 0 0 0', background: '#111116', borderTop: 'none' });
-               edBody.style.maxHeight = '100vh';
-               edBody.style.height = 'calc(100vh - 50px)';
-            } else {
-               Object.assign(nav.style, {
-                  width: '550px', height: 'auto', top: '20px', left: '50%',
-                  transform: 'translateX(-50%)', borderRadius: '12px',
-                  position: 'fixed', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
-               });
-               editor.style.padding = '16px';
-               edBody.style.maxHeight = '420px';
-               edBody.style.height = 'auto';
-            }
+            // level 3 agora abre em janela separada — o nav permanece no tamanho normal
+            Object.assign(nav.style, {
+               width: '550px', height: 'auto', top: '20px', left: '50%',
+               transform: 'translateX(-50%)', borderRadius: '12px',
+               position: 'fixed', boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            });
+            editor.style.padding = '16px';
+            edBody.style.maxHeight = '420px';
+            edBody.style.height = 'auto';
             document.getElementById('tasy-nav-header').style.display = 'none';
             results.style.display = 'none';
             editor.style.display = 'flex';
@@ -494,7 +481,6 @@ window.TasyPdf = window.TasyPdf || {};
        `).join('');
       }
 
-      // Navega direto pro editor de campo a partir de um item do histórico com contexto
       async function resumeFromHistory(h) {
          edState.reportCode = h.code;
          edState.reportSeq  = h.seq;
@@ -504,7 +490,6 @@ window.TasyPdf = window.TasyPdf || {};
          results.style.display = 'none';
          document.getElementById('tasy-nav-header').style.display = 'none';
 
-         // Busca os campos da banda para ter o objeto completo do campo
          try {
             const fields = await ctx.fetchFields(h.bandSeq);
             edState.rawFields = fields;
@@ -526,11 +511,9 @@ window.TasyPdf = window.TasyPdf || {};
       function renderHistory() {
          results.style.display = 'block';
 
-         // Lê timeline de edições do localStorage
          let timeline = [];
          try { timeline = JSON.parse(localStorage.getItem('tasy_edit_timeline') || '[]'); } catch(e) {}
 
-         // Seção de timeline de edições (só aparece se tiver algo)
          let timelineHtml = '';
          if (timeline.length > 0) {
             const timelineItems = timeline.map(t => `
@@ -568,7 +551,6 @@ window.TasyPdf = window.TasyPdf || {};
               </div>`;
          }
 
-         // Seção de histórico de PDFs gerados
          if (!historyData || historyData.length === 0) {
             if (!timelineHtml) {
                results.innerHTML = `
@@ -647,7 +629,6 @@ window.TasyPdf = window.TasyPdf || {};
       results.addEventListener('click', (e) => {
          const item = e.target.closest('.tasy-res-item');
 
-         // Botão Continuar — retoma edição direto no campo
          if (e.target.closest('.tasy-btn-resume')) {
             const el = e.target.closest('.tasy-timeline-item') || e.target.closest('.tasy-res-item');
             resumeFromHistory({
@@ -661,14 +642,12 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // Limpar timeline de edições
          if (e.target.closest('#tasy-btn-timeline-clear')) {
             localStorage.removeItem('tasy_edit_timeline');
             renderHistory();
             return;
          }
 
-         // Clique direto no item da timeline (não no botão)
          if (e.target.closest('.tasy-timeline-item') && !e.target.closest('.tasy-btn-resume')) {
             const el = e.target.closest('.tasy-timeline-item');
             resumeFromHistory({
@@ -682,13 +661,11 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // Botão de Limpar Histórico
          if (e.target.closest('#tasy-btn-hist-clear')) {
             renderClearConfirm();
             return;
          }
 
-         // Confirmação de Limpeza - SIM
          if (e.target.closest('#tasy-btn-confirm-clear-yes')) {
             window.postMessage({ type: 'TASY_PDF_HISTORY_CLEAR' }, '*');
             historyData = [];
@@ -696,7 +673,6 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // Confirmação de Limpeza - NÃO
          if (e.target.closest('#tasy-btn-confirm-clear-no')) {
             renderHistory();
             return;
@@ -715,7 +691,6 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // GERAÇÃO DE PDF: Se clicou no botão de Gerar OU se clicou no item de histórico (mas não no botão de editar)
          if (e.target.closest('.tasy-btn-gen') || item.classList.contains('tasy-hist-item')) {
             closeNav();
             console.log('[Tasy PDF] Generating PDF for:', code);
@@ -725,14 +700,12 @@ window.TasyPdf = window.TasyPdf || {};
       });
 
       // -------- LEVEL 1: BANDAS --------
-      // Clipboard interno para Ctrl+C / Ctrl+V de bandas
-      let bandClipboard = null; // { bandObj, fieldCount }
-      // Clipboard interno para Ctrl+C / Ctrl+V de campos
-      let fieldClipboard = null; // fieldObj
+      let bandClipboard = null;
+      let fieldClipboard = null;
 
       function setBandClipboard(bandObj, fieldCount) {
          bandClipboard = { bandObj, fieldCount };
-         renderBandsUI(); // re-renderiza para mostrar badge + botão paste
+         renderBandsUI();
       }
 
       async function loadBandsUI() {
@@ -749,7 +722,6 @@ window.TasyPdf = window.TasyPdf || {};
          if (!bands) { renderLoading(edBody, "Carregando Bandas"); return; }
          if (bands.length === 0) { edBody.innerHTML = `<div style="color:#ef4444; padding:10px;">Nenhuma banda encontrada.</div>`; return; }
 
-         // Botão de colar (só aparece se tiver algo no clipboard)
          const pasteBtn = bandClipboard ? `
            <button id="ed-btn-paste-band"
              style="width:100%; padding:10px; background:rgba(167,139,250,0.1); color:#a78bfa; border:1px dashed rgba(167,139,250,0.4); border-radius:8px; font-weight:600; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:10px; transition:all 0.2s;"
@@ -757,7 +729,6 @@ window.TasyPdf = window.TasyPdf || {};
              ${icons.clone} Colar "${bandClipboard.bandObj.DS_BANDA}" (${bandClipboard.fieldCount} campo${bandClipboard.fieldCount !== 1 ? 's' : ''}) &nbsp;<kbd style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:1px 5px;font-size:10px;">Ctrl+V</kbd>
            </button>` : '';
 
-         // Paleta de cores por tipo de banda
          const bandTypeMap = {
             'C': { label:'Cabeçalho', color:'#60a5fa', bg:'rgba(96,165,250,0.10)', dot:'#3b82f6' },
             'R': { label:'Rodapé',    color:'#f97316', bg:'rgba(249,115,22,0.10)', dot:'#f97316' },
@@ -777,10 +748,8 @@ window.TasyPdf = window.TasyPdf || {};
                             border:1px solid ${isCopied ? 'rgba(167,139,250,0.6)' : 'rgba(255,255,255,0.07)'};
                             border-radius:10px; cursor:pointer; transition:all 0.18s;
                             display:flex; flex-direction:column; gap:0; position:relative; overflow:hidden;">
-                   <!-- Barra colorida no topo -->
                    <div style="height:3px; background:${isCopied ? '#a78bfa' : bs.dot}; border-radius:10px 10px 0 0; opacity:0.7;"></div>
                    <div style="padding:10px 12px 10px 12px;">
-                     <!-- Linha do título -->
                      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px; margin-bottom:8px;">
                        <div style="display:flex; align-items:center; gap:7px; min-width:0; flex:1;">
                          <span style="width:6px;height:6px;border-radius:50%;background:${isCopied ? '#a78bfa' : bs.dot};flex-shrink:0;margin-top:2px;"></span>
@@ -788,14 +757,12 @@ window.TasyPdf = window.TasyPdf || {};
                        </div>
                        ${isCopied ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;font-size:8px;font-weight:700;padding:2px 5px;border-radius:3px;letter-spacing:0.5px;flex-shrink:0;">COPIADA</span>` : ''}
                      </div>
-                     <!-- Badges de info -->
                      <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;">
                        <span style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:2px 6px;font-size:9px;color:${bs.color};font-weight:600;">${bs.label}</span>
                        <span style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:2px 6px;font-size:9px;color:#64748b;">${b.QT_ALTURA || 0}px</span>
                        ${fundo ? `<span style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:2px 6px;font-size:9px;color:#64748b;display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:2px;background:${fundo};border:1px solid rgba(255,255,255,0.15);"></span>${fundo}</span>` : ''}
                        <span style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:4px;padding:2px 6px;font-size:9px;color:#475569;">#${i+1}</span>
                      </div>
-                     <!-- Ações -->
                      <div style="display:flex; align-items:center; justify-content:space-between;">
                        <kbd class="tasy-band-copy-hint" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:4px;padding:1px 5px;font-size:9px;color:#475569;opacity:0;transition:opacity 0.2s;">Ctrl+C</kbd>
                        <button class="tasy-btn-delete-band" data-seq="${b.NR_SEQUENCIA}"
@@ -810,7 +777,6 @@ window.TasyPdf = window.TasyPdf || {};
                 </div>`;
             }).join('') + `</div>`;
 
-         // Mostra hint Ctrl+C e botão delete ao hover
          edBody.querySelectorAll('.tasy-band-item').forEach(el => {
             const hint = el.querySelector('.tasy-band-copy-hint');
             const delBtn = el.querySelector('.tasy-btn-delete-band');
@@ -826,13 +792,11 @@ window.TasyPdf = window.TasyPdf || {};
       }
 
       edBody.addEventListener('click', (e) => {
-         // ── Novo Campo — abre modal ──────────────────────────────────────
          if (e.target.closest('#ed-btn-add-field')) {
             openCreateFieldModal();
             return;
          }
 
-         // ── Clonar Campo ────────────────────────────────────────────────
          if (e.target.closest('.tasy-btn-clone-field')) {
             e.stopPropagation();
             if (!ctx.cloneFieldObj) { ctx.showToast('cloneFieldObj não disponível.', 'error'); return; }
@@ -855,7 +819,6 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // ── Deletar Campo — abre modal de confirmação ───────────────────
          if (e.target.closest('.tasy-btn-delete-field')) {
             e.stopPropagation();
             const btn = e.target.closest('.tasy-btn-delete-field');
@@ -866,7 +829,6 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // ── Deletar Banda ────────────────────────────────────────────────
          if (e.target.closest('.tasy-btn-delete-band')) {
             e.stopPropagation();
             const btn = e.target.closest('.tasy-btn-delete-band');
@@ -877,19 +839,16 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // ── Colar Banda ─────────────────────────────────────────────────
          if (e.target.closest('#ed-btn-paste-band')) {
             pasteBand();
             return;
          }
 
-         // ── Colar Campo ─────────────────────────────────────────────────
          if (e.target.closest('#ed-btn-paste-field')) {
             pasteField();
             return;
          }
 
-         // ── Abrir Editor (clique no field-item) ─────────────────────────
          const band = e.target.closest('.tasy-band-item');
          if (band) {
             edState.level = 2;
@@ -902,9 +861,6 @@ window.TasyPdf = window.TasyPdf || {};
             edState.level = 3;
             const seq = field.getAttribute('data-seq');
             edState.activeField = edState.rawFields.find(f => String(f.NR_SEQUENCIA) === String(seq));
-            // Salva contexto de edição no localStorage para retomar depois
-            // Usamos localStorage direto pois o background deduplica por 'code'
-            // e perderia os dados de banda/campo
             try {
                const editCtx = {
                   code: edState.reportCode,
@@ -915,10 +871,8 @@ window.TasyPdf = window.TasyPdf || {};
                   fieldName: edState.activeField?.DS_CAMPO || 'Campo',
                   date: new Date().toLocaleString('pt-BR')
                };
-               // Mantém lista dos últimos 10 contextos únicos por fieldSeq
                const raw = localStorage.getItem('tasy_edit_timeline');
                let timeline = raw ? JSON.parse(raw) : [];
-               // Remove entrada anterior do mesmo campo se existir
                timeline = timeline.filter(t => !(t.code === editCtx.code && t.fieldSeq === editCtx.fieldSeq));
                timeline.unshift(editCtx);
                timeline = timeline.slice(0, 10);
@@ -978,7 +932,6 @@ window.TasyPdf = window.TasyPdf || {};
                });
                ctx.showToast(`Banda "${nome}" deletada.`, 'success');
                closeModal();
-               // Limpa clipboard se era essa banda que estava copiada
                if (bandClipboard?.bandObj?.NR_SEQUENCIA === bandObj.NR_SEQUENCIA) bandClipboard = null;
                const bands = await ctx.fetchBands(edState.reportSeq);
                edState.rawBands = bands;
@@ -1184,7 +1137,6 @@ window.TasyPdf = window.TasyPdf || {};
             return;
          }
 
-         // Mapeamento de tipo de campo para ícone/cor
          const fieldTypeLabel = {
             '1': { label:'Texto',     color:'#60a5fa', bg:'rgba(96,165,250,0.12)'  },
             '0': { label:'Atributo',  color:'#34d399', bg:'rgba(52,211,153,0.12)'  },
@@ -1211,42 +1163,27 @@ window.TasyPdf = window.TasyPdf || {};
                          opacity:${inactive ? '0.45' : '1'};"
                   onmouseover="this.style.borderColor='rgba(96,165,250,0.45)';this.style.background='rgba(59,130,246,0.05)';this.style.transform='translateX(2px)';"
                   onmouseout="this.style.borderColor='${isCopied ? 'rgba(167,139,250,0.45)' : 'rgba(255,255,255,0.06)'}';this.style.background='${isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'}';this.style.transform='translateX(0)';">
-
-               <!-- Faixa lateral colorida por tipo -->
                <div style="width:3px; background:${ft.color}; flex-shrink:0; opacity:0.7;"></div>
-
-               <!-- Número de ordem -->
                <div style="width:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.04);">
                  <span style="color:#334155; font-size:9px; font-weight:600;">${i+1}</span>
                </div>
-
-               <!-- Conteúdo principal -->
                <div style="flex:1; padding:8px 10px; display:flex; flex-direction:column; gap:5px; min-width:0;">
-                 <!-- Linha do nome -->
                  <div style="display:flex; align-items:center; gap:6px;">
                    <span style="color:#e2e8f0; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${f.DS_CAMPO || '—'}</span>
                    ${isCopied ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;">COPIADO</span>` : ''}
                    ${inactive ? `<span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;">INATIVO</span>` : ''}
                  </div>
-                 <!-- Linha de info -->
                  <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                   <!-- Badge tipo -->
                    <span style="background:${ft.bg};color:${ft.color};border-radius:4px;padding:1px 6px;font-size:9px;font-weight:600;">${ft.label}</span>
-                   <!-- Coords -->
                    <span style="background:rgba(129,140,248,0.08);color:#818cf8;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">X:${f.QT_ESQUERDA||0}</span>
                    <span style="background:rgba(52,211,153,0.08);color:#34d399;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">Y:${f.QT_TOPO||0}</span>
                    <span style="background:rgba(251,191,36,0.08);color:#fbbf24;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">W:${f.QT_TAMANHO||0}</span>
                    <span style="background:rgba(248,113,113,0.08);color:#f87171;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">H:${f.QT_ALTURA||0}</span>
-                   <!-- Cor da fonte -->
                    ${fontColor ? `<span style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.04);border-radius:4px;padding:1px 5px;"><span style="width:8px;height:8px;border-radius:50%;background:${fontColor};border:1px solid rgba(255,255,255,0.2);flex-shrink:0;"></span><span style="color:#64748b;font-size:9px;">fonte</span></span>` : ''}
-                   <!-- Cor de fundo -->
                    ${bgColor ? `<span style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.04);border-radius:4px;padding:1px 5px;"><span style="width:8px;height:8px;border-radius:2px;background:${bgColor};border:1px solid rgba(255,255,255,0.2);flex-shrink:0;"></span><span style="color:#64748b;font-size:9px;">fundo</span></span>` : ''}
-                   <!-- Tamanho fonte -->
                    ${f.QT_TAM_FONTE ? `<span style="color:#475569;font-size:9px;font-family:monospace;">${f.QT_TAM_FONTE}pt</span>` : ''}
                  </div>
                </div>
-
-               <!-- Ações -->
                <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 8px; border-left:1px solid rgba(255,255,255,0.04);">
                  <button class="tasy-btn-clone-field" data-seq="${f.NR_SEQUENCIA}" title="Clonar campo"
                    style="border:none;background:rgba(167,139,250,0.08);color:#7c6cbb;width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;"
@@ -1265,7 +1202,6 @@ window.TasyPdf = window.TasyPdf || {};
          }).join('') + `</div>`;
       }
 
-      // ── Ctrl+C / Ctrl+V para campos ──────────────────────────────────
       async function pasteField() {
          if (!fieldClipboard) return;
          const btn = document.getElementById('ed-btn-paste-field');
@@ -1282,7 +1218,6 @@ window.TasyPdf = window.TasyPdf || {};
          }
       }
 
-      // Ctrl+C / Ctrl+V para campos (level 2)
       document.addEventListener('keydown', (e) => {
          if (edState.level !== 2) return;
          const isCopy  = (e.ctrlKey || e.metaKey) && e.key === 'c';
@@ -1307,7 +1242,6 @@ window.TasyPdf = window.TasyPdf || {};
          }
       });
 
-      // ── Ctrl+C / Ctrl+V para bandas ───────────────────────────────────
       async function pasteBand() {
          if (!bandClipboard) return;
          const btn = document.getElementById('ed-btn-paste-band');
@@ -1315,7 +1249,6 @@ window.TasyPdf = window.TasyPdf || {};
          try {
             const newBand = await ctx.cloneBandObj(bandClipboard.bandObj);
             ctx.showToast(`"${bandClipboard.bandObj.DS_BANDA}" colada com ${bandClipboard.fieldCount} campo(s)!`, 'success');
-            // Rebusca bandas e re-renderiza
             const bands = await ctx.fetchBands(edState.reportSeq);
             edState.rawBands = bands;
             renderBandsUI();
@@ -1326,14 +1259,12 @@ window.TasyPdf = window.TasyPdf || {};
          }
       }
 
-      // Atalhos globais Ctrl+C / Ctrl+V ativos na tela de bandas (level 1)
       document.addEventListener('keydown', async (e) => {
          if (edState.level !== 1) return;
          const isCopy  = (e.ctrlKey || e.metaKey) && e.key === 'c';
          const isPaste = (e.ctrlKey || e.metaKey) && e.key === 'v';
          if (!isCopy && !isPaste) return;
 
-         // Descobre qual band-item está com :hover (o último focado pelo mouse)
          const hovered = edBody.querySelector('.tasy-band-item:hover');
 
          if (isCopy) {
@@ -1343,7 +1274,6 @@ window.TasyPdf = window.TasyPdf || {};
             const seq = target.getAttribute('data-seq');
             const bandObj = edState.rawBands.find(b => String(b.NR_SEQUENCIA) === String(seq));
             if (!bandObj) return;
-            // Conta campos para mostrar no botão de paste
             let fieldCount = 0;
             try { const f = await ctx.fetchFields(seq); fieldCount = f.length; } catch(_) {}
             setBandClipboard(bandObj, fieldCount);
@@ -1356,167 +1286,244 @@ window.TasyPdf = window.TasyPdf || {};
          }
       });
 
-      // -------- LEVEL 3: FORMULÁRIO DE EDIÇÃO --------
+      // -------- LEVEL 3: FORMULÁRIO DE EDIÇÃO — abre em janela separada --------
       async function loadEditFormUI() {
          const f = edState.activeField;
-         edState.fieldSnapshot = { ...f }; // congela o estado no momento da abertura
-         switchView('editor');
-         edTitle.innerHTML = `<span style="color:#cbd5e1">${icons.edit}</span> Propriedades <span style="color:#64748b; margin:0 4px;">/</span> <span style="color:#3b82f6">${f.DS_CAMPO || 'Componente'}</span>`;
+         edState.fieldSnapshot = { ...f };
 
-         edBody.innerHTML = `
-          <div style="display:flex; width:100%; height:100%; min-height: calc(100vh - 60px); background:#111116;">
-           <div style="width:380px; min-width:380px; background:#1e1e24; border-right:1px solid #2b2b36; display:flex; flex-direction:column; gap:16px; padding:20px; overflow-y:auto; scrollbar-width:thin;">
-             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Posição X</label>
-                <input type="number" id="ed-inp-left" value="${f.QT_ESQUERDA || 0}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Posição Y</label>
-                <input type="number" id="ed-inp-top" value="${f.QT_TOPO || 0}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Largura</label>
-                <input type="number" id="ed-inp-width" value="${f.QT_TAMANHO || 0}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Altura</label>
-                <input type="number" id="ed-inp-height" value="${f.QT_ALTURA || 0}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
+         // [JANELA SEPARADA] Fecha/reutiliza janela do editor
+         const winName = '__tasy_studio_editor__';
+         const isWinUsable = () => {
+            try { return editorWindow && !editorWindow.closed && editorWindow.document; } catch(e) { return false; }
+         };
+
+         if (!isWinUsable()) {
+            editorWindow = window.open('', winName, 'width=1200,height=800,resizable=yes,scrollbars=no');
+         }
+
+         if (!editorWindow) {
+            ctx.showToast('Popup bloqueado — permita popups para este site.', 'error');
+            edState.level = 2;
+            return;
+         }
+
+         // Monta o HTML da janela com os ícones e estilos necessários
+         const iconsSerialized = JSON.stringify(icons);
+         editorWindow.document.open();
+         editorWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Studio — ${f.DS_CAMPO || 'Campo'} [${edState.reportCode}]</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #111116; font-family: system-ui, sans-serif; overflow: hidden; }
+    input, select { color-scheme: dark; }
+    input:focus, select:focus { border-color: #3b82f6 !important; background: rgba(59,130,246,0.05) !important; outline: none; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f5a; border-radius: 3px; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  </style>
+</head>
+<body>
+  <div id="root" style="width:100vw;height:100vh;display:flex;flex-direction:column;"></div>
+</body>
+</html>`);
+         editorWindow.document.close();
+
+         // Aguarda DOM estar pronto
+         await new Promise(res => setTimeout(res, 80));
+
+         const wd = editorWindow.document;
+         const root = wd.getElementById('root');
+         if (!root) { ctx.showToast('Erro ao montar janela do editor.', 'error'); return; }
+
+         // Ícones disponíveis na janela filha
+         const ic = icons;
+
+         // Cabeçalho da janela
+         const header = wd.createElement('div');
+         header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#1a1a22;border-bottom:1px solid #2b2b36;flex-shrink:0;gap:12px;';
+         header.innerHTML = `
+           <div style="display:flex;align-items:center;gap:10px;">
+             <span style="color:#64748b;font-size:12px;">Studio</span>
+             <span style="color:#334155;">›</span>
+             <span style="color:#94a3b8;font-size:12px;">${edState.reportCode}</span>
+             <span style="color:#334155;">›</span>
+             <span style="color:#60a5fa;font-size:12px;font-weight:600;">${f.DS_CAMPO || 'Campo'}</span>
+           </div>
+           <div style="display:flex;gap:8px;">
+             <button id="win-btn-preview" style="border:none;background:rgba(16,185,129,0.15);color:#34d399;padding:6px 12px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;">${ic.print} PDF Preview</button>
+             <button id="win-btn-close" style="border:none;background:rgba(239,68,68,0.12);color:#ef4444;padding:6px 12px;border-radius:6px;font-weight:600;font-size:12px;cursor:pointer;">✕ Fechar</button>
+           </div>`;
+         root.appendChild(header);
+
+         // Corpo principal
+         const body = wd.createElement('div');
+         body.style.cssText = 'display:flex;flex:1;overflow:hidden;';
+         body.innerHTML = `
+           <div id="win-form-panel" style="width:380px;min-width:380px;background:#1e1e24;border-right:1px solid #2b2b36;display:flex;flex-direction:column;gap:16px;padding:20px;overflow-y:auto;scrollbar-width:thin;">
+             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Posição X</label>
+               <input type="number" id="ed-inp-left" value="${f.QT_ESQUERDA||0}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Posição Y</label>
+               <input type="number" id="ed-inp-top" value="${f.QT_TOPO||0}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Largura</label>
+               <input type="number" id="ed-inp-width" value="${f.QT_TAMANHO||0}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Altura</label>
+               <input type="number" id="ed-inp-height" value="${f.QT_ALTURA||0}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
              </div>
              <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">String de Conteúdo (DS_CONTEUDO)</label>
-             <input type="text" id="ed-inp-text" value="${f.DS_CONTEUDO || ''}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
-             <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px;">
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Fonte</label>
-                <input type="number" id="ed-inp-fontsize" value="${f.QT_TAM_FONTE || 0}" class="tasy-form-ctrl" style="width:100%; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;"></div>
-                <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Cor da Fonte</label>
-                <div style="display:flex; gap:8px;">
-                   <input type="color" id="ed-inp-colorpicker" value="#ffffff" style="width:38px; height:38px; padding:0; background:transparent; border:none; border-radius:6px; cursor:pointer;" title="Paleta de Cores">
-                   <input type="text" id="ed-inp-fontcolor" value="${f.DS_COR_FONTE || ''}" class="tasy-form-ctrl" style="flex:1; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;" placeholder="clBlack">
-                </div></div>
+             <input type="text" id="ed-inp-text" value="${f.DS_CONTEUDO||''}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
+             <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px;">
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Fonte</label>
+               <input type="number" id="ed-inp-fontsize" value="${f.QT_TAM_FONTE||0}" style="width:100%;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;"></div>
+               <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Cor da Fonte</label>
+               <div style="display:flex;gap:8px;">
+                 <input type="color" id="ed-inp-colorpicker" value="#ffffff" style="width:38px;height:38px;padding:0;background:transparent;border:none;border-radius:6px;cursor:pointer;">
+                 <input type="text" id="ed-inp-fontcolor" value="${f.DS_COR_FONTE||''}" style="flex:1;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;" placeholder="clBlack">
+               </div></div>
              </div>
              <div><label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:6px;display:block;">Cor da Label</label>
-             <div style="display:flex; gap:8px;">
-                <input type="color" id="ed-inp-labelcolorpicker" value="#ffffff" style="width:38px; height:38px; padding:0; background:transparent; border:none; border-radius:6px; cursor:pointer;" title="Paleta de Cores Label">
-                <input type="text" id="ed-inp-labelcolor" value="${f.DS_COR_LABEL || ''}" class="tasy-form-ctrl" style="flex:1; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;" placeholder="clBlack">
+             <div style="display:flex;gap:8px;">
+               <input type="color" id="ed-inp-labelcolorpicker" value="#ffffff" style="width:38px;height:38px;padding:0;background:transparent;border:none;border-radius:6px;cursor:pointer;">
+               <input type="text" id="ed-inp-labelcolor" value="${f.DS_COR_LABEL||''}" style="flex:1;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;" placeholder="clBlack">
              </div></div>
-             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-                <select id="ed-inp-align" style="width:100%; height:38px; padding:0 10px; background:#2b2b36; border:1px solid #3f3f5a; color:#f8fafc; border-radius:6px; font-size:12px; outline:none; color-scheme: dark;">
-                   <option value="" ${!f.IE_ALINHAMENTO ? 'selected' : ''}>Alinh. Padrão</option>
-                   <option value="E" ${f.IE_ALINHAMENTO === 'E' ? 'selected' : ''}>Esquerda</option>
-                   <option value="C" ${f.IE_ALINHAMENTO === 'C' ? 'selected' : ''}>Centro</option>
-                   <option value="D" ${f.IE_ALINHAMENTO === 'D' ? 'selected' : ''}>Direita</option>
-                </select>
-                <select id="ed-inp-fontstyle" style="width:100%; height:38px; padding:0 10px; background:#2b2b36; border:1px solid #3f3f5a; color:#f8fafc; border-radius:6px; font-size:12px; outline:none; color-scheme: dark;">
-                   <option value="">---</option>
-                   <option value="N">Negrito</option>
-                   <option value="I">Itálico</option>
-                   <option value="NI">Negrito e Itálico</option>
-                   <option value="S">Sublinhado</option>
-                   <option value="NS">Negrito e Sublinhado</option>
-                   <option value="IS">Itálico e sublinhado</option>
-                   <option value="NIS">Negrito, Itálico e Sublinhado</option>
-                </select>
+             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+               <select id="ed-inp-align" style="width:100%;height:38px;padding:0 10px;background:#2b2b36;border:1px solid #3f3f5a;color:#f8fafc;border-radius:6px;font-size:12px;outline:none;color-scheme:dark;">
+                 <option value="" ${!f.IE_ALINHAMENTO?'selected':''}>Alinh. Padrão</option>
+                 <option value="E" ${f.IE_ALINHAMENTO==='E'?'selected':''}>Esquerda</option>
+                 <option value="C" ${f.IE_ALINHAMENTO==='C'?'selected':''}>Centro</option>
+                 <option value="D" ${f.IE_ALINHAMENTO==='D'?'selected':''}>Direita</option>
+               </select>
+               <select id="ed-inp-fontstyle" style="width:100%;height:38px;padding:0 10px;background:#2b2b36;border:1px solid #3f3f5a;color:#f8fafc;border-radius:6px;font-size:12px;outline:none;color-scheme:dark;">
+                 <option value="">---</option>
+                 <option value="N">Negrito</option>
+                 <option value="I">Itálico</option>
+                 <option value="NI">Negrito e Itálico</option>
+                 <option value="S">Sublinhado</option>
+                 <option value="NS">Negrito e Sublinhado</option>
+                 <option value="IS">Itálico e sublinhado</option>
+                 <option value="NIS">Negrito, Itálico e Sublinhado</option>
+               </select>
              </div>
-             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
-                <label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:8px;display:block;">Fundo</label>
-                <div style="display:flex; gap:8px; margin-bottom:10px;">
-                   <input type="color" id="ed-inp-bgcolorpicker" value="#ffffff" style="width:38px; height:38px; padding:0; background:transparent; border:none; border-radius:6px; cursor:pointer;" title="Cor de Fundo">
-                   <input type="text" id="ed-inp-bgcolor" value="${f.DS_COR_FUNDO || ''}" class="tasy-form-ctrl" style="flex:1; padding:10px; background:#2b2b36; border:1px solid #3f3f5a; color:white; border-radius:6px; font-size:13px; outline:none;" placeholder="clWhite">
-                </div>
-                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:#f8fafc; font-size:12px; padding:8px 10px; background:#2b2b36; border:1px solid #3f3f5a; border-radius:6px;">
-                  <input type="checkbox" id="ed-chk-transp" ${f.IE_TRANSPARENTE === 'S' ? 'checked' : ''}> Fundo Transparente
-                </label>
+             <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;">
+               <label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:8px;display:block;">Fundo</label>
+               <div style="display:flex;gap:8px;margin-bottom:10px;">
+                 <input type="color" id="ed-inp-bgcolorpicker" value="#ffffff" style="width:38px;height:38px;padding:0;background:transparent;border:none;border-radius:6px;cursor:pointer;">
+                 <input type="text" id="ed-inp-bgcolor" value="${f.DS_COR_FUNDO||''}" style="flex:1;padding:10px;background:#2b2b36;border:1px solid #3f3f5a;color:white;border-radius:6px;font-size:13px;outline:none;" placeholder="clWhite">
+               </div>
+               <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#f8fafc;font-size:12px;padding:8px 10px;background:#2b2b36;border:1px solid #3f3f5a;border-radius:6px;">
+                 <input type="checkbox" id="ed-chk-transp" ${f.IE_TRANSPARENTE==='S'?'checked':''}> Fundo Transparente
+               </label>
              </div>
-             <div style="border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
-                <label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:8px;display:block;">Bordas</label>
-                <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
-                   <label style="color:white; font-size:11px; border:1px solid #3f3f5a; padding:6px; border-radius:4px; background:#2b2b36; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="ed-chk-borda-sup" ${f.IE_BORDA_SUP === 'S' ? 'checked' : ''}> Topo</label>
-                   <label style="color:white; font-size:11px; border:1px solid #3f3f5a; padding:6px; border-radius:4px; background:#2b2b36; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="ed-chk-borda-inf" ${f.IE_BORDA_INF === 'S' ? 'checked' : ''}> Base</label>
-                   <label style="color:white; font-size:11px; border:1px solid #3f3f5a; padding:6px; border-radius:4px; background:#2b2b36; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="ed-chk-borda-esq" ${f.IE_BORDA_ESQ === 'S' ? 'checked' : ''}> Esq.</label>
-                   <label style="color:white; font-size:11px; border:1px solid #3f3f5a; padding:6px; border-radius:4px; background:#2b2b36; display:flex; align-items:center; gap:4px;"><input type="checkbox" id="ed-chk-borda-dir" ${f.IE_BORDA_DIR === 'S' ? 'checked' : ''}> Dir.</label>
-                </div>
+             <div style="border-top:1px solid rgba(255,255,255,0.05);padding-top:12px;">
+               <label style="color:#94a3b8;font-size:11px;font-weight:500;margin-bottom:8px;display:block;">Bordas</label>
+               <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+                 <label style="color:white;font-size:11px;border:1px solid #3f3f5a;padding:6px;border-radius:4px;background:#2b2b36;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ed-chk-borda-sup" ${f.IE_BORDA_SUP==='S'?'checked':''}> Topo</label>
+                 <label style="color:white;font-size:11px;border:1px solid #3f3f5a;padding:6px;border-radius:4px;background:#2b2b36;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ed-chk-borda-inf" ${f.IE_BORDA_INF==='S'?'checked':''}> Base</label>
+                 <label style="color:white;font-size:11px;border:1px solid #3f3f5a;padding:6px;border-radius:4px;background:#2b2b36;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ed-chk-borda-esq" ${f.IE_BORDA_ESQ==='S'?'checked':''}> Esq.</label>
+                 <label style="color:white;font-size:11px;border:1px solid #3f3f5a;padding:6px;border-radius:4px;background:#2b2b36;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="ed-chk-borda-dir" ${f.IE_BORDA_DIR==='S'?'checked':''}> Dir.</label>
+               </div>
              </div>
-             <div style="display:flex; gap:8px; margin-top:auto;">
-               <button id="ed-btn-undo" title="Desfazer (Ctrl+Z)" style="padding:14px 10px; background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; display:flex; align-items:center; transition:all 0.2s; opacity:0.4;" disabled>
-                 ${icons.undo}
-               </button>
-               <button id="ed-btn-redo" title="Refazer (Ctrl+Y)" style="padding:14px 10px; background:rgba(255,255,255,0.05); color:#94a3b8; border:1px solid rgba(255,255,255,0.1); border-radius:8px; cursor:pointer; display:flex; align-items:center; transition:all 0.2s; opacity:0.4;" disabled>
-                 ${icons.redo}
-               </button>
-               <button id="ed-btn-save" style="flex:1; padding:14px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 15px rgba(59,130,246,0.3); transition:all 0.2s;">
-                 ${icons.save} Aplicar Alterações
-               </button>
+             <div style="display:flex;gap:8px;margin-top:auto;">
+               <button id="ed-btn-undo" title="Desfazer (Ctrl+Z)" style="padding:14px 10px;background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;display:flex;align-items:center;transition:all 0.2s;opacity:0.4;" disabled>${ic.undo}</button>
+               <button id="ed-btn-redo" title="Refazer (Ctrl+Y)" style="padding:14px 10px;background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;cursor:pointer;display:flex;align-items:center;transition:all 0.2s;opacity:0.4;" disabled>${ic.redo}</button>
+               <button id="ed-btn-save" style="flex:1;padding:14px;background:#3b82f6;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 15px rgba(59,130,246,0.3);transition:all 0.2s;">${ic.save} Aplicar Alterações</button>
              </div>
            </div>
+           <div style="flex:1;background:#525659;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+             <div id="tasy-pdf-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#525659;color:white;z-index:10;">
+               <div style="text-align:center;">
+                 <div style="font-size:18px;font-weight:600;margin-bottom:10px;">Gerando PDF Real...</div>
+                 <div style="color:#94a3b8;font-size:13px;">Aguardando resposta do Tasy</div>
+               </div>
+             </div>
+             <div id="tasy-sync-badge" style="position:absolute;top:20px;right:20px;background:rgba(59,130,246,0.9);color:white;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;z-index:20;opacity:0;transform:translateY(-10px);transition:all 0.3s;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+               <span style="display:inline-block;width:8px;height:8px;background:white;border-radius:50%;margin-right:6px;animation:pulse 1s infinite;box-shadow:0 0 4px white;"></span> Sincronizando...
+             </div>
+             <iframe id="tasy-pdf-iframe-A" style="position:absolute;inset:0;width:100%;height:100%;border:none;transition:opacity 0.1s ease-in-out;z-index:2;opacity:1;"></iframe>
+             <iframe id="tasy-pdf-iframe-B" style="position:absolute;inset:0;width:100%;height:100%;border:none;transition:opacity 0.1s ease-in-out;z-index:1;opacity:0;"></iframe>
+           </div>`;
+         root.appendChild(body);
 
-           <div style="flex:1; background:#525659; display:flex; flex-direction:column; position:relative; overflow:hidden;">
-              <div id="tasy-pdf-loading" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#525659; color:white; z-index:10;">
-                 <div style="text-align:center;">
-                    <div style="font-size:18px; font-weight:600; margin-bottom:10px;">Gerando PDF Real...</div>
-                    <div style="color:#94a3b8; font-size:13px;">Aguardando resposta do Tasy</div>
-                 </div>
-              </div>
-              <div id="tasy-sync-badge" style="position:absolute; top:20px; right:20px; background:rgba(59,130,246,0.9); color:white; padding:6px 12px; border-radius:20px; font-size:11px; font-weight:600; z-index:20; opacity:0; transform:translateY(-10px); transition:all 0.3s; pointer-events:none; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-                 <span style="display:inline-block; width:8px; height:8px; background:white; border-radius:50%; margin-right:6px; animation: pulse 1s infinite; box-shadow: 0 0 4px white;"></span> Sincronizando...
-              </div>
-              <iframe id="tasy-pdf-iframe-A" style="position:absolute; inset:0; width:100%; height:100%; border:none; transition: opacity 0.1s ease-in-out; z-index:2; opacity:1;"></iframe>
-              <iframe id="tasy-pdf-iframe-B" style="position:absolute; inset:0; width:100%; height:100%; border:none; transition: opacity 0.1s ease-in-out; z-index:1; opacity:0;"></iframe>
-           </div>
-          </div>
-        `;
+         // Foca a janela
+         editorWindow.focus();
 
-         const inputs = edBody.querySelectorAll('input, select');
-         const pdfLoading = document.getElementById('tasy-pdf-loading');
+         // Notifica o spotlight que o editor está aberto (volta ao level 2 visualmente)
+         collapseSearch();
+
+         // Ao fechar a janela, volta o state para level 2
+         editorWindow.onbeforeunload = () => {
+            edState.level = 2;
+            if (ctx.cancelPendingGeneration) ctx.cancelPendingGeneration();
+         };
+
+         // ── Botões do header da janela ────────────────────────────────
+         wd.getElementById('win-btn-preview').addEventListener('click', () => {
+            if (edState.reportCode && ctx.generateManualPdf) ctx.generateManualPdf(edState.reportCode);
+         });
+         wd.getElementById('win-btn-close').addEventListener('click', () => {
+            editorWindow.close();
+            edState.level = 2;
+            loadFieldsUI();
+            // Reabre o spotlight no nível de campos
+            nav.style.display = '';
+            nav.style.opacity = '1';
+            switchView('editor');
+         });
+
+         // ── Lógica de save / undo / redo (igual ao original, mas usando wd) ──
+         const $ = (id) => wd.getElementById(id);
+         const inputs = wd.querySelectorAll('#win-form-panel input, #win-form-panel select');
+         const pdfLoading = $('tasy-pdf-loading');
          let saveTimer = null;
-
          const selectToDb = (val) => val === '' ? null : val;
-
          let lastSavedObj = { ...f };
-
          let isSaving = false;
          let pendingSave = false;
          let isReverting = false;
 
-         // ── Pilhas de Undo / Redo ─────────────────────────────────────
-         const undoStack = [];   // estados anteriores ao atual
-         const redoStack = [];   // estados desfeitos (disponíveis pro redo)
+         const undoStack = [];
+         const redoStack = [];
          const UNDO_LIMIT = 50;
 
          function pushUndo(stateSnapshot) {
             undoStack.push({ ...stateSnapshot });
             if (undoStack.length > UNDO_LIMIT) undoStack.shift();
-            redoStack.length = 0; // qualquer nova edição limpa o redo
+            redoStack.length = 0;
             updateUndoRedoUI();
          }
 
          function updateUndoRedoUI() {
-            const undoBtn = document.getElementById('ed-btn-undo');
-            const redoBtn = document.getElementById('ed-btn-redo');
-            if (undoBtn) {
-               const can = undoStack.length > 0;
-               undoBtn.disabled = !can;
-               undoBtn.style.opacity = can ? '1' : '0.4';
-               undoBtn.style.color = can ? '#f1f5f9' : '#94a3b8';
-            }
-            if (redoBtn) {
-               const can = redoStack.length > 0;
-               redoBtn.disabled = !can;
-               redoBtn.style.opacity = can ? '1' : '0.4';
-               redoBtn.style.color = can ? '#f1f5f9' : '#94a3b8';
-            }
+            const undoBtn = $('ed-btn-undo');
+            const redoBtn = $('ed-btn-redo');
+            if (undoBtn) { const can = undoStack.length > 0; undoBtn.disabled = !can; undoBtn.style.opacity = can ? '1' : '0.4'; undoBtn.style.color = can ? '#f1f5f9' : '#94a3b8'; }
+            if (redoBtn) { const can = redoStack.length > 0; redoBtn.disabled = !can; redoBtn.style.opacity = can ? '1' : '0.4'; redoBtn.style.color = can ? '#f1f5f9' : '#94a3b8'; }
          }
+
+         const colorPicker      = $('ed-inp-colorpicker');
+         const labelColorPicker = $('ed-inp-labelcolorpicker');
+         const bgColorPicker    = $('ed-inp-bgcolorpicker');
 
          function applyStateToForm(s) {
             isReverting = true;
             clearTimeout(saveTimer);
-            document.getElementById('ed-inp-left').value    = s.QT_ESQUERDA    || 0;
-            document.getElementById('ed-inp-top').value     = s.QT_TOPO        || 0;
-            document.getElementById('ed-inp-width').value   = s.QT_TAMANHO     || 0;
-            document.getElementById('ed-inp-height').value  = s.QT_ALTURA      || 0;
-            document.getElementById('ed-inp-fontsize').value= s.QT_TAM_FONTE   || 0;
-            document.getElementById('ed-inp-text').value    = s.DS_CONTEUDO    || '';
-            document.getElementById('ed-inp-fontcolor').value  = s.DS_COR_FONTE  || '';
-            document.getElementById('ed-inp-labelcolor').value = s.DS_COR_LABEL  || '';
-            document.getElementById('ed-inp-align').value      = s.IE_ALINHAMENTO || '';
-            document.getElementById('ed-inp-fontstyle').value  = s.DS_ESTILO_FONTE || '';
-            document.getElementById('ed-chk-transp').checked    = s.IE_TRANSPARENTE === 'S';
-            document.getElementById('ed-chk-borda-sup').checked = s.IE_BORDA_SUP   === 'S';
-            document.getElementById('ed-chk-borda-inf').checked = s.IE_BORDA_INF   === 'S';
-            document.getElementById('ed-chk-borda-esq').checked = s.IE_BORDA_ESQ   === 'S';
-            document.getElementById('ed-chk-borda-dir').checked = s.IE_BORDA_DIR   === 'S';
+            $('ed-inp-left').value      = s.QT_ESQUERDA    || 0;
+            $('ed-inp-top').value       = s.QT_TOPO        || 0;
+            $('ed-inp-width').value     = s.QT_TAMANHO     || 0;
+            $('ed-inp-height').value    = s.QT_ALTURA      || 0;
+            $('ed-inp-fontsize').value  = s.QT_TAM_FONTE   || 0;
+            $('ed-inp-text').value      = s.DS_CONTEUDO    || '';
+            $('ed-inp-fontcolor').value    = s.DS_COR_FONTE  || '';
+            $('ed-inp-labelcolor').value   = s.DS_COR_LABEL  || '';
+            $('ed-inp-align').value        = s.IE_ALINHAMENTO || '';
+            $('ed-inp-fontstyle').value    = s.DS_ESTILO_FONTE || '';
+            $('ed-chk-transp').checked     = s.IE_TRANSPARENTE === 'S';
+            $('ed-chk-borda-sup').checked  = s.IE_BORDA_SUP   === 'S';
+            $('ed-chk-borda-inf').checked  = s.IE_BORDA_INF   === 'S';
+            $('ed-chk-borda-esq').checked  = s.IE_BORDA_ESQ   === 'S';
+            $('ed-chk-borda-dir').checked  = s.IE_BORDA_DIR   === 'S';
             if (colorPicker)      colorPicker.value      = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_FONTE)  : '#000000';
             if (labelColorPicker) labelColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_LABEL)  : '#ffffff';
             if (bgColorPicker)    bgColorPicker.value    = ctx.tasyToHex ? ctx.tasyToHex(s.DS_COR_FUNDO)  : '#ffffff';
@@ -1525,47 +1532,41 @@ window.TasyPdf = window.TasyPdf || {};
 
          function readFormState() {
             return {
-               QT_ESQUERDA: Number(document.getElementById('ed-inp-left')?.value) || 0,
-               QT_TOPO: Number(document.getElementById('ed-inp-top')?.value) || 0,
-               QT_TAMANHO: Number(document.getElementById('ed-inp-width')?.value) || 0,
-               QT_ALTURA: Number(document.getElementById('ed-inp-height')?.value) || 0,
-               QT_TAM_FONTE: Number(document.getElementById('ed-inp-fontsize')?.value) || 0,
-               DS_CONTEUDO: document.getElementById('ed-inp-text')?.value ?? '',
-               DS_COR_FONTE: document.getElementById('ed-inp-fontcolor')?.value ?? '',
-               DS_COR_LABEL: document.getElementById('ed-inp-labelcolor')?.value ?? '',
-               DS_COR_FUNDO: document.getElementById('ed-inp-bgcolor')?.value ?? '',
-               IE_TRANSPARENTE: document.getElementById('ed-chk-transp')?.checked ? 'S' : 'N',
-               // ── "" → null: nunca mandar string vazia pro updateFieldObj do Tasy
-               IE_ALINHAMENTO: selectToDb(document.getElementById('ed-inp-align')?.value ?? ''),
-               DS_ESTILO_FONTE: selectToDb(document.getElementById('ed-inp-fontstyle')?.value ?? ''),
-               IE_BORDA_SUP: document.getElementById('ed-chk-borda-sup')?.checked ? 'S' : 'N',
-               IE_BORDA_INF: document.getElementById('ed-chk-borda-inf')?.checked ? 'S' : 'N',
-               IE_BORDA_ESQ: document.getElementById('ed-chk-borda-esq')?.checked ? 'S' : 'N',
-               IE_BORDA_DIR: document.getElementById('ed-chk-borda-dir')?.checked ? 'S' : 'N',
+               QT_ESQUERDA:     Number($('ed-inp-left')?.value)     || 0,
+               QT_TOPO:         Number($('ed-inp-top')?.value)      || 0,
+               QT_TAMANHO:      Number($('ed-inp-width')?.value)    || 0,
+               QT_ALTURA:       Number($('ed-inp-height')?.value)   || 0,
+               QT_TAM_FONTE:    Number($('ed-inp-fontsize')?.value) || 0,
+               DS_CONTEUDO:     $('ed-inp-text')?.value      ?? '',
+               DS_COR_FONTE:    $('ed-inp-fontcolor')?.value ?? '',
+               DS_COR_LABEL:    $('ed-inp-labelcolor')?.value ?? '',
+               DS_COR_FUNDO:    $('ed-inp-bgcolor')?.value   ?? '',
+               IE_TRANSPARENTE: $('ed-chk-transp')?.checked     ? 'S' : 'N',
+               IE_ALINHAMENTO:  selectToDb($('ed-inp-align')?.value     ?? ''),
+               DS_ESTILO_FONTE: selectToDb($('ed-inp-fontstyle')?.value ?? ''),
+               IE_BORDA_SUP:    $('ed-chk-borda-sup')?.checked ? 'S' : 'N',
+               IE_BORDA_INF:    $('ed-chk-borda-inf')?.checked ? 'S' : 'N',
+               IE_BORDA_ESQ:    $('ed-chk-borda-esq')?.checked ? 'S' : 'N',
+               IE_BORDA_DIR:    $('ed-chk-borda-dir')?.checked ? 'S' : 'N',
             };
          }
 
-         function isDirty(a, b) {
-            return JSON.stringify(a) !== JSON.stringify(b);
-         }
+         function isDirty(a, b) { return JSON.stringify(a) !== JSON.stringify(b); }
 
          const enqueueAndSave = (immediate = false) => {
-            if (isReverting) return; // não salva durante revert
+            if (isReverting) return;
             clearTimeout(saveTimer);
             const run = async () => {
                if (isSaving) { pendingSave = true; return; }
                const formState = readFormState();
                const newObj = { ...f, ...formState };
                if (!isDirty(lastSavedObj, newObj)) return;
-
                isSaving = true;
                try {
-                  pushUndo(lastSavedObj); // guarda estado anterior antes de salvar
+                  pushUndo(lastSavedObj);
                   await ctx.updateFieldObj(lastSavedObj, newObj);
                   lastSavedObj = { ...newObj };
                   Object.assign(edState.activeField, newObj);
-                  
-                  // ── FIX: gerar PDF apenas APÓS o save terminar (Tasy lê do Banco!)
                   if (ctx.scheduleRefresh) ctx.scheduleRefresh(edState.reportCode, 0);
                } catch (err) {
                   console.error('[Studio] Save Error:', err.message);
@@ -1600,61 +1601,35 @@ window.TasyPdf = window.TasyPdf || {};
             }
          });
 
-         const updatePdfIframeFallback = () => {
-            const iframeA = document.getElementById('tasy-pdf-iframe-A');
-            const iframeB = document.getElementById('tasy-pdf-iframe-B');
-            if (!iframeA || !iframeB) return;
-            const active = iframeA.style.opacity !== '0' ? iframeA : iframeB;
-            if (active.src && active.src !== 'about:blank' && (!pdfLoading || pdfLoading.style.display === 'none')) return;
-            const frame = document.querySelector('iframe[id="__pdf_preview__"]') || (window.previewWindow && !window.previewWindow.closed && window.previewWindow.document.querySelector('iframe'));
-            if (frame && frame.src && frame.src !== 'about:blank') ctx.updateOrOpenPreview(frame.src);
-         };
+         // Seta valores dos color pickers após render
+         if (colorPicker) {
+            colorPicker.value = ctx.tasyToHex ? ctx.tasyToHex($('ed-inp-fontcolor').value) : '#000000';
+            colorPicker.addEventListener('change', (e) => { $('ed-inp-fontcolor').value = e.target.value.toUpperCase(); enqueueAndSave(); });
+         }
+         if (labelColorPicker) {
+            labelColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex($('ed-inp-labelcolor').value) : '#000000';
+            labelColorPicker.addEventListener('change', (e) => { $('ed-inp-labelcolor').value = e.target.value.toUpperCase(); enqueueAndSave(); });
+         }
+         if (bgColorPicker) {
+            bgColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex($('ed-inp-bgcolor').value) : '#ffffff';
+            bgColorPicker.addEventListener('change', (e) => { $('ed-inp-bgcolor').value = e.target.value.toUpperCase(); enqueueAndSave(); });
+         }
 
-         const pollInterval = setInterval(updatePdfIframeFallback, 2000);
-         setTimeout(() => clearInterval(pollInterval), 20000);
-
-         if (ctx.generateManualPdf) ctx.generateManualPdf(edState.reportCode);
-
-         // ── FIX: seta o valor do select após renderizar
-         const fontStyleSel = document.getElementById('ed-inp-fontstyle');
+         // Seta estilo da fonte
+         const fontStyleSel = $('ed-inp-fontstyle');
          if (fontStyleSel) {
-            const estiloAtual = f.DS_ESTILO_FONTE;
-            const valid = ['N', 'I', 'NI', 'S', 'NS', 'IS', 'NIS'];
-            fontStyleSel.value = valid.includes(estiloAtual) ? estiloAtual : '';
+            const valid = ['N','I','NI','S','NS','IS','NIS'];
+            fontStyleSel.value = valid.includes(f.DS_ESTILO_FONTE) ? f.DS_ESTILO_FONTE : '';
          }
 
-         const colorPicker = document.getElementById('ed-inp-colorpicker');
-         const colorText = document.getElementById('ed-inp-fontcolor');
-         if (colorPicker && colorText) {
-            colorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(colorText.value) : '#000000';
-            colorPicker.addEventListener('change', (e) => { colorText.value = e.target.value.toUpperCase(); enqueueAndSave(); });
-         }
-
-         const labelColorPicker = document.getElementById('ed-inp-labelcolorpicker');
-         const labelColorText = document.getElementById('ed-inp-labelcolor');
-         if (labelColorPicker && labelColorText) {
-            labelColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(labelColorText.value) : '#000000';
-            labelColorPicker.addEventListener('change', (e) => { labelColorText.value = e.target.value.toUpperCase(); enqueueAndSave(); });
-         }
-
-         const bgColorPicker = document.getElementById('ed-inp-bgcolorpicker');
-         const bgColorText = document.getElementById('ed-inp-bgcolor');
-         if (bgColorPicker && bgColorText) {
-            bgColorPicker.value = ctx.tasyToHex ? ctx.tasyToHex(bgColorText.value) : '#ffffff';
-            bgColorPicker.addEventListener('change', (e) => { bgColorText.value = e.target.value.toUpperCase(); enqueueAndSave(); });
-         }
-
-         // LÓGICA REVERTER (UNDO/SNAPSHOT)
-         // ── Undo ──────────────────────────────────────────────────────
-         document.getElementById('ed-btn-undo')?.addEventListener('click', async () => {
+         // Undo
+         $('ed-btn-undo')?.addEventListener('click', async () => {
             if (undoStack.length === 0) return;
             const current = { ...lastSavedObj };
             const prev = undoStack.pop();
             redoStack.push(current);
             applyStateToForm(prev);
             updateUndoRedoUI();
-            // lastSavedObj mantém o estado atual (current) para que isDirty detecte diff com prev
-            // e só é atualizado para prev depois do save completar dentro do enqueueAndSave
             const newObj = { ...lastSavedObj, ...prev };
             await ctx.updateFieldObj(lastSavedObj, newObj);
             lastSavedObj = { ...newObj };
@@ -1662,8 +1637,8 @@ window.TasyPdf = window.TasyPdf || {};
             if (ctx.scheduleRefresh) ctx.scheduleRefresh(edState.reportCode, 0);
          });
 
-         // ── Redo ──────────────────────────────────────────────────────
-         document.getElementById('ed-btn-redo')?.addEventListener('click', async () => {
+         // Redo
+         $('ed-btn-redo')?.addEventListener('click', async () => {
             if (redoStack.length === 0) return;
             const current = { ...lastSavedObj };
             const next = redoStack.pop();
@@ -1677,41 +1652,70 @@ window.TasyPdf = window.TasyPdf || {};
             if (ctx.scheduleRefresh) ctx.scheduleRefresh(edState.reportCode, 0);
          });
 
-         // ── Atalhos Ctrl+Z / Ctrl+Y ────────────────────────────────────
-         const undoKeyHandler = (e) => {
-            if (edState.level !== 3) return;
-            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
-               e.preventDefault();
-               document.getElementById('ed-btn-undo')?.click();
-            }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
-               e.preventDefault();
-               document.getElementById('ed-btn-redo')?.click();
-            }
-         };
-         document.addEventListener('keydown', undoKeyHandler);
-         // Remove listener quando sair do level 3 (evita acúmulo de handlers)
-         const _origBack = edBack.onclick;
-         edBack.addEventListener('click', () => document.removeEventListener('keydown', undoKeyHandler));
-
-         document.getElementById('ed-btn-save').addEventListener('click', async () => {
-            const btn = document.getElementById('ed-btn-save');
-            btn.innerHTML = `Aplicando...`;
-            await enqueueAndSave();
-            btn.innerHTML = `${icons.save} Aplicar Alterações`;
+         // Atalhos Ctrl+Z / Ctrl+Y na janela filha
+         editorWindow.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); $('ed-btn-undo')?.click(); }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); $('ed-btn-redo')?.click(); }
          });
+
+         // Botão Salvar
+         $('ed-btn-save').addEventListener('click', async () => {
+            const btn = $('ed-btn-save');
+            btn.innerHTML = 'Aplicando...';
+            await enqueueAndSave(true);
+            btn.innerHTML = `${ic.save} Aplicar Alterações`;
+         });
+
+         // Integração com updateOrOpenPreview para usar os iframes da janela filha
+         const _origUpdateOrOpen = ctx.updateOrOpenPreview.bind(ctx);
+         ctx.updateOrOpenPreview = function(pdfUrl) {
+            if (!isWinUsable()) { ctx.updateOrOpenPreview = _origUpdateOrOpen; _origUpdateOrOpen(pdfUrl); return; }
+            const iA = $('tasy-pdf-iframe-A');
+            const iB = $('tasy-pdf-iframe-B');
+            if (!iA || !iB) { _origUpdateOrOpen(pdfUrl); return; }
+            const isAVisible = iA.style.opacity !== '0';
+            const active = isAVisible ? iA : iB;
+            const hidden = isAVisible ? iB : iA;
+            const loader = $('tasy-pdf-loading');
+            const badge  = $('tasy-sync-badge');
+            if (badge && (!loader || loader.style.display === 'none')) { badge.style.opacity = '1'; badge.style.transform = 'translateY(0)'; }
+            hidden.onload = () => {
+               hidden.style.opacity = '1'; hidden.style.zIndex = '2';
+               active.style.opacity = '0'; active.style.zIndex = '1';
+               if (loader) loader.style.display = 'none';
+               if (badge) { badge.style.opacity = '0'; badge.style.transform = 'translateY(-10px)'; }
+            };
+            hidden.src = pdfUrl + (pdfUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+         };
+
+         // Restaura updateOrOpenPreview ao fechar
+         editorWindow.addEventListener('beforeunload', () => {
+            ctx.updateOrOpenPreview = _origUpdateOrOpen;
+         });
+
+         // Gera PDF inicial
+         if (ctx.generateManualPdf) ctx.generateManualPdf(edState.reportCode);
       }
 
-      // NAVEGAÇÃO
+      // NAVEGAÇÃO (edBack só ativo nos levels 1 e 2 agora)
       edBack.addEventListener('click', () => {
          ctx.removeGhostField();
          if (ctx.cancelPendingGeneration) ctx.cancelPendingGeneration();
-         if (edState.level === 3) { edState.level = 2; loadFieldsUI(); }
-         else if (edState.level === 2) { edState.level = 1; loadBandsUI(); }
-         else if (edState.level === 1) { edState.level = 0; switchView('search'); }
+         if (edState.level === 3) {
+            // Fecha janela separada se estiver aberta
+            try { if (editorWindow && !editorWindow.closed) editorWindow.close(); } catch(e) {}
+            edState.level = 2;
+            loadFieldsUI();
+         } else if (edState.level === 2) {
+            edState.level = 1;
+            loadBandsUI();
+         } else if (edState.level === 1) {
+            edState.level = 0;
+            switchView('search');
+         }
       });
 
-      // ── Botão Importar (Spotlight + Studio) 
+      // ── Botão Importar (Spotlight + Studio)
       function openImportModal() {
          document.getElementById('tasy-modal-import-standalone')?.remove();
          const m = document.createElement('div');
@@ -1728,7 +1732,6 @@ window.TasyPdf = window.TasyPdf || {};
                <button id="imp-close" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;">✕</button>
              </div>
              <div style="color:#475569;font-size:12px;margin-bottom:18px;">Importa o relatório exatamente como exportado pelo Tasy Studio ou pelo Tasy nativo.</div>
-
              <label id="imp-drop-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px 20px;background:#2b2b3e;border:2px dashed rgba(34,197,94,0.3);border-radius:12px;cursor:pointer;transition:all 0.2s;text-align:center;">
                <div style="width:48px;height:48px;background:rgba(34,197,94,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;font-weight:700;">↑</div>
                <div>
@@ -1749,40 +1752,24 @@ window.TasyPdf = window.TasyPdf || {};
          const hint      = document.getElementById('imp-hint');
 
          async function runImportStandalone(file) {
-            if (!file || !file.name.match(/\.xml$/i)) {
-               ctx.showToast('Selecione um arquivo .xml válido.', 'error'); return;
-            }
+            if (!file || !file.name.match(/\.xml$/i)) { ctx.showToast('Selecione um arquivo .xml válido.', 'error'); return; }
             dropZone.style.borderColor = 'rgba(34,197,94,0.8)';
             dropZone.style.background  = 'rgba(34,197,94,0.08)';
             dropZone.style.pointerEvents = 'none';
             hint.textContent = `Enviando "${file.name}"...`;
-
             try {
-               // Passo 1: upload
                const fd = new FormData();
                fd.append('file', file, file.name);
-               const up = await fetch('/TasyAppServer/resources/files', {
-                  method: 'POST', body: fd, credentials: 'include'
-               });
+               const up = await fetch('/TasyAppServer/resources/files', { method: 'POST', body: fd, credentials: 'include' });
                if (!up.ok) throw new Error('Upload falhou: HTTP ' + up.status);
                const upResult = await up.json();
                const xmlPath  = Array.isArray(upResult) ? upResult[0] : upResult;
                if (!xmlPath?.startsWith('tasy-storage://')) throw new Error('Path inválido: ' + JSON.stringify(xmlPath));
-
                hint.textContent = 'Registrando...';
-
-               // Passo 2: importXMLReportAction
                const http = ctx.getHttpService();
                if (!http) throw new Error('Angular não está pronto.');
-               await http.post(
-                  '/TasyAppServer/resources/service/CorSisFQ/importXMLReportAction',
-                  [{ tipo: 'HashMap', valor: { XML_PATH: xmlPath } }],
-                  { suppressError: true, ignoreError: true }
-               );
-
+               await http.post('/TasyAppServer/resources/service/CorSisFQ/importXMLReportAction', [{ tipo: 'HashMap', valor: { XML_PATH: xmlPath } }], { suppressError: true, ignoreError: true });
                hint.textContent = 'Aplicando...';
-
-               // Extrai NR_SEQUENCIA do XML
                let nrSeq = null;
                try {
                   const doc = new DOMParser().parseFromString(await file.text(), 'text/xml');
@@ -1790,22 +1777,14 @@ window.TasyPdf = window.TasyPdf || {};
                   if (reg) nrSeq = parseInt(reg.getAttribute('NR_SEQUENCIA'));
                } catch(e) {}
                if (!nrSeq) throw new Error('Não foi possível extrair NR_SEQUENCIA do XML.');
-
-               // Passo 3: atualizarBaseRelatorioImp
-               const r3 = await http.post(
-                  '/TasyAppServer/resources/service/CorSisFQ/atualizarBaseRelatorioImp',
-                  [{ tipo: 'HashMap', valor: { NR_SEQUENCIA: nrSeq } }],
-                  { suppressError: true, ignoreError: true }
-               );
+               const r3 = await http.post('/TasyAppServer/resources/service/CorSisFQ/atualizarBaseRelatorioImp', [{ tipo: 'HashMap', valor: { NR_SEQUENCIA: nrSeq } }], { suppressError: true, ignoreError: true });
                const newSeq = r3?.data?.dados;
                ctx.showToast(`Relatório importado! Abrindo editor...`, 'success');
                closeImp();
-               // Navega direto pro Studio do relatório importado
                if (newSeq) {
                   let cdRelatorio = '';
                   try {
-                     const xmlText2 = await file.text();
-                     const doc2 = new DOMParser().parseFromString(xmlText2, 'text/xml');
+                     const doc2 = new DOMParser().parseFromString(await file.text(), 'text/xml');
                      const reg2 = doc2.querySelector('Tabela[nm_tabela="W_RELATORIO"] registros registro');
                      cdRelatorio = reg2?.getAttribute('CD_RELATORIO') || '';
                   } catch(e) {}
@@ -1830,7 +1809,6 @@ window.TasyPdf = window.TasyPdf || {};
          dropZone.addEventListener('drop', (e) => { e.preventDefault(); const f=e.dataTransfer?.files?.[0]; if(f) runImportStandalone(f); });
       }
 
-      // Wires dos botões de Importar
       document.getElementById('tasy-spotlight-import-btn')?.addEventListener('click', openImportModal);
       document.getElementById('tasy-studio-import-btn')?.addEventListener('click', openImportModal);
 
@@ -1838,8 +1816,6 @@ window.TasyPdf = window.TasyPdf || {};
          if (!edState.reportSeq) { ctx.showToast('Abra um relatório antes de exportar.', 'error'); return; }
          openExportModal();
       });
-
-      // MODAL: Exportar Relatório
 
       function openExportModal() {
          document.getElementById('tasy-modal-export')?.remove();
@@ -1857,52 +1833,25 @@ window.TasyPdf = window.TasyPdf || {};
                <button id="exp-close" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;">✕</button>
              </div>
              <div style="color:#475569;font-size:12px;margin-bottom:18px;">Relatório <span style="color:#60a5fa;font-weight:600;">${edState.reportCode}</span></div>
-
              <div style="display:flex;flex-direction:column;gap:10px;">
-
-               <button id="exp-xml" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(96,165,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;"
-                 onmouseover="this.style.borderColor='rgba(96,165,250,0.6)';this.style.background='rgba(96,165,250,0.08)'"
-                 onmouseout="this.style.borderColor='rgba(96,165,250,0.2)';this.style.background='#2b2b3e'">
+               <button id="exp-xml" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(96,165,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(96,165,250,0.6)';this.style.background='rgba(96,165,250,0.08)'" onmouseout="this.style.borderColor='rgba(96,165,250,0.2)';this.style.background='#2b2b3e'">
                  <div style="width:38px;height:38px;background:rgba(96,165,250,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#60a5fa;font-size:14px;font-weight:800;">XML</div>
-                 <div>
-                   <div style="color:#f1f5f9;font-size:13px;font-weight:600;">Estrutura Completa</div>
-                   <div style="color:#475569;font-size:11px;margin-top:2px;">Bandas, campos e parâmetros — compatível com importação</div>
-                 </div>
+                 <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Estrutura Completa</div><div style="color:#475569;font-size:11px;margin-top:2px;">Bandas, campos e parâmetros — compatível com importação</div></div>
                </button>
-
-               <button id="exp-pdf" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(239,68,68,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;"
-                 onmouseover="this.style.borderColor='rgba(239,68,68,0.6)';this.style.background='rgba(239,68,68,0.08)'"
-                 onmouseout="this.style.borderColor='rgba(239,68,68,0.2)';this.style.background='#2b2b3e'">
+               <button id="exp-pdf" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(239,68,68,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(239,68,68,0.6)';this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.borderColor='rgba(239,68,68,0.2)';this.style.background='#2b2b3e'">
                  <div style="width:38px;height:38px;background:rgba(239,68,68,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ef4444;font-size:14px;font-weight:800;">PDF</div>
-                 <div>
-                   <div style="color:#f1f5f9;font-size:13px;font-weight:600;">Gerar e Baixar PDF</div>
-                   <div style="color:#475569;font-size:11px;margin-top:2px;">Gera o relatório e baixa o arquivo PDF gerado</div>
-                 </div>
+                 <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Gerar e Baixar PDF</div><div style="color:#475569;font-size:11px;margin-top:2px;">Gera o relatório e baixa o arquivo PDF gerado</div></div>
                </button>
-
-               <button id="exp-json" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(167,139,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;"
-                 onmouseover="this.style.borderColor='rgba(167,139,250,0.6)';this.style.background='rgba(167,139,250,0.08)'"
-                 onmouseout="this.style.borderColor='rgba(167,139,250,0.2)';this.style.background='#2b2b3e'">
+               <button id="exp-json" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(167,139,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(167,139,250,0.6)';this.style.background='rgba(167,139,250,0.08)'" onmouseout="this.style.borderColor='rgba(167,139,250,0.2)';this.style.background='#2b2b3e'">
                  <div style="width:38px;height:38px;background:rgba(167,139,250,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#a78bfa;font-size:12px;font-weight:800;">JSON</div>
-                 <div>
-                   <div style="color:#f1f5f9;font-size:13px;font-weight:600;">Backup Legível</div>
-                   <div style="color:#475569;font-size:11px;margin-top:2px;">Estrutura completa em JSON — fácil de ler e editar</div>
-                 </div>
+                 <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Backup Legível</div><div style="color:#475569;font-size:11px;margin-top:2px;">Estrutura completa em JSON — fácil de ler e editar</div></div>
                </button>
-
                <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
-
-               <label id="exp-import-label" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(34,197,94,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;box-sizing:border-box;"
-                 onmouseover="this.style.borderColor='rgba(34,197,94,0.6)';this.style.background='rgba(34,197,94,0.06)'"
-                 onmouseout="this.style.borderColor='rgba(34,197,94,0.2)';this.style.background='#2b2b3e'">
+               <label id="exp-import-label" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(34,197,94,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;box-sizing:border-box;" onmouseover="this.style.borderColor='rgba(34,197,94,0.6)';this.style.background='rgba(34,197,94,0.06)'" onmouseout="this.style.borderColor='rgba(34,197,94,0.2)';this.style.background='#2b2b3e'">
                  <div style="width:38px;height:38px;background:rgba(34,197,94,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#22c55e;font-size:18px;font-weight:700;">↑</div>
-                 <div style="flex:1;">
-                   <div style="color:#f1f5f9;font-size:13px;font-weight:600;">Importar XML</div>
-                   <div id="exp-import-hint" style="color:#475569;font-size:11px;margin-top:2px;">Selecione ou arraste um arquivo .xml para importar</div>
-                 </div>
+                 <div style="flex:1;"><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Importar XML</div><div id="exp-import-hint" style="color:#475569;font-size:11px;margin-top:2px;">Selecione ou arraste um arquivo .xml para importar</div></div>
                  <input id="exp-import-input" type="file" accept=".xml" style="display:none;">
                </label>
-
              </div>
            </div>`;
          document.body.appendChild(modal);
@@ -1911,20 +1860,14 @@ window.TasyPdf = window.TasyPdf || {};
          document.getElementById('exp-close').addEventListener('click', closeModal);
          modal.addEventListener('mousedown', (e) => { if (e.target === modal) closeModal(); });
 
-         // ── XML 
          document.getElementById('exp-xml').addEventListener('click', async () => {
             const btn = document.getElementById('exp-xml');
-            btn.style.opacity = '0.6';
-            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
             btn.querySelector('div:last-child div:first-child').textContent = 'Exportando...';
             try {
                const http = ctx.getHttpService();
                if (!http) throw new Error('Angular não está pronto.');
-               const r = await http.post(
-                  '/TasyAppServer/resources/service/CorSisFQ/exportatAction',
-                  [{ tipo: 'HashMap', valor: { NR_SEQ_RELAT: Number(edState.reportSeq) } }],
-                  { suppressError: true, ignoreError: true }
-               );
+               const r = await http.post('/TasyAppServer/resources/service/CorSisFQ/exportatAction', [{ tipo: 'HashMap', valor: { NR_SEQ_RELAT: Number(edState.reportSeq) } }], { suppressError: true, ignoreError: true });
                const xml = r?.data?.dados;
                if (!xml || !xml.includes('<?xml')) throw new Error('XML inválido na resposta');
                triggerDownload(xml, `relatorio_${edState.reportCode}_${edState.reportSeq}.xml`, 'application/xml');
@@ -1937,33 +1880,21 @@ window.TasyPdf = window.TasyPdf || {};
             }
          });
 
-         // ── PDF 
          document.getElementById('exp-pdf').addEventListener('click', async () => {
             const btn = document.getElementById('exp-pdf');
-            btn.style.opacity = '0.6';
-            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
             btn.querySelector('div:last-child div:first-child').textContent = 'Gerando PDF...';
             try {
-               // Usa o generateManualPdf para gerar, depois intercepta a URL do PDF
                if (!ctx.getHttpService()) throw new Error('Angular não está pronto.');
                const param = await (async () => {
-                  const r1 = await ctx.getHttpService().post(
-                     '/TasyAppServer/resources/service/Report/getReportsData',
-                     ctx.buildReportsDataBody(edState.reportCode, 'CMCZ'),
-                     { suppressError: true, ignoreError: true }
-                  );
+                  const r1 = await ctx.getHttpService().post('/TasyAppServer/resources/service/Report/getReportsData', ctx.buildReportsDataBody(edState.reportCode, 'CMCZ'), { suppressError: true, ignoreError: true });
                   return r1.data?.reports?.[0];
                })();
                if (!param) throw new Error('Parâmetros do relatório não encontrados');
-               const r2 = await ctx.getHttpService().post(
-                  '/TasyAppServer/resources/service/Report/generateReports',
-                  ctx.buildGenerateBody(param),
-                  { suppressError: true, ignoreError: true }
-               );
+               const r2 = await ctx.getHttpService().post('/TasyAppServer/resources/service/Report/generateReports', ctx.buildGenerateBody(param), { suppressError: true, ignoreError: true });
                const pdfFileName = r2.data?.reports?.[0]?.pdfFileName;
                if (!pdfFileName) throw new Error('PDF não gerado pelo servidor');
                const pdfUrl = '/TasyAppServer/resources/files/pdf/' + pdfFileName;
-               // Baixa o PDF
                const resp = await fetch(pdfUrl, { credentials: 'include' });
                const blob = await resp.blob();
                triggerDownload(await blob.arrayBuffer(), `relatorio_${edState.reportCode}.pdf`, 'application/pdf');
@@ -1976,20 +1907,13 @@ window.TasyPdf = window.TasyPdf || {};
             }
          });
 
-         // ── JSON 
          document.getElementById('exp-json').addEventListener('click', async () => {
             const btn = document.getElementById('exp-json');
-            btn.style.opacity = '0.6';
-            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none';
             btn.querySelector('div:last-child div:first-child').textContent = 'Montando JSON...';
             try {
                const bands = await ctx.fetchBands(edState.reportSeq);
-               const fullData = {
-                  exportedAt: new Date().toISOString(),
-                  reportCode: edState.reportCode,
-                  reportSeq:  edState.reportSeq,
-                  bands: []
-               };
+               const fullData = { exportedAt: new Date().toISOString(), reportCode: edState.reportCode, reportSeq: edState.reportSeq, bands: [] };
                for (const band of bands) {
                   const fields = await ctx.fetchFields(band.NR_SEQUENCIA);
                   fullData.bands.push({ ...band, fields });
@@ -2004,116 +1928,72 @@ window.TasyPdf = window.TasyPdf || {};
                btn.querySelector('div:last-child div:first-child').textContent = 'Backup Legível';
             }
          });
-      }
 
-      // ── IMPORTAR XML 
-      const importInput = document.getElementById('exp-import-input');
-      const importLabel = document.getElementById('exp-import-label');
-      const importHint  = document.getElementById('exp-import-hint');
+         const importInput = document.getElementById('exp-import-input');
+         const importLabel = document.getElementById('exp-import-label');
+         const importHint  = document.getElementById('exp-import-hint');
 
-      async function runImport(file) {
-         if (!file || !file.name.match(/\.xml$/i)) {
-            ctx.showToast('Selecione um arquivo .xml válido.', 'error'); return;
-         }
-         importLabel.style.borderColor   = 'rgba(34,197,94,0.8)';
-         importLabel.style.background    = 'rgba(34,197,94,0.1)';
-         importLabel.style.pointerEvents = 'none';
-         importHint.textContent = `Importando "${file.name}"...`;
-
-         try {
-            // Passo 1: upload do arquivo para storage interno do Tasy
-            const formData = new FormData();
-            formData.append('file', file, file.name);
-            const uploadResp = await fetch('/TasyAppServer/resources/files', {
-               method: 'POST', body: formData, credentials: 'include'
-            });
-            if (!uploadResp.ok) throw new Error('Falha no upload: HTTP ' + uploadResp.status);
-            const uploadResult = await uploadResp.json();
-            const xmlPath = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
-            if (!xmlPath || !xmlPath.startsWith('tasy-storage://')) {
-               throw new Error('Resposta de upload inválida: ' + JSON.stringify(xmlPath));
-            }
-
-            importHint.textContent = 'Registrando no servidor...';
-
-            // Passo 2: importXMLReportAction — coloca na fila de importação
-            const http = ctx.getHttpService();
-            if (!http) throw new Error('Angular não está pronto.');
-            await http.post(
-               '/TasyAppServer/resources/service/CorSisFQ/importXMLReportAction',
-               [{ tipo: 'HashMap', valor: { XML_PATH: xmlPath } }],
-               { suppressError: true, ignoreError: true }
-            );
-
-            importHint.textContent = 'Aplicando mudanças...';
-
-            // Extrai NR_SEQUENCIA do XML para confirmar a importação
-            let nrSeqRelatorio = null;
+         async function runImport(file) {
+            if (!file || !file.name.match(/\.xml$/i)) { ctx.showToast('Selecione um arquivo .xml válido.', 'error'); return; }
+            importLabel.style.borderColor   = 'rgba(34,197,94,0.8)';
+            importLabel.style.background    = 'rgba(34,197,94,0.1)';
+            importLabel.style.pointerEvents = 'none';
+            importHint.textContent = `Importando "${file.name}"...`;
             try {
-               const xmlText = await file.text();
-               const parser  = new DOMParser();
-               const xmlDoc  = parser.parseFromString(xmlText, 'text/xml');
-               const reg = xmlDoc.querySelector('Tabela[nm_tabela="W_RELATORIO"] registros registro');
-               if (reg) nrSeqRelatorio = parseInt(reg.getAttribute('NR_SEQUENCIA'));
-            } catch(e) { /* ignora */ }
-            if (!nrSeqRelatorio) throw new Error('Não foi possível extrair NR_SEQUENCIA do XML.');
-
-            // Passo 3: atualizarBaseRelatorioImp — confirma e retorna novo NR_SEQ
-            const r3 = await http.post(
-               '/TasyAppServer/resources/service/CorSisFQ/atualizarBaseRelatorioImp',
-               [{ tipo: 'HashMap', valor: { NR_SEQUENCIA: nrSeqRelatorio } }],
-               { suppressError: true, ignoreError: true }
-            );
-            const newSeq = r3?.data?.dados;
-            ctx.showToast(`Relatório importado! Abrindo editor...`, 'success');
-            closeModal();
-            if (newSeq) {
-               let cdRelatorio2 = '';
+               const formData = new FormData();
+               formData.append('file', file, file.name);
+               const uploadResp = await fetch('/TasyAppServer/resources/files', { method: 'POST', body: formData, credentials: 'include' });
+               if (!uploadResp.ok) throw new Error('Falha no upload: HTTP ' + uploadResp.status);
+               const uploadResult = await uploadResp.json();
+               const xmlPath = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
+               if (!xmlPath || !xmlPath.startsWith('tasy-storage://')) throw new Error('Resposta de upload inválida: ' + JSON.stringify(xmlPath));
+               importHint.textContent = 'Registrando no servidor...';
+               const http = ctx.getHttpService();
+               if (!http) throw new Error('Angular não está pronto.');
+               await http.post('/TasyAppServer/resources/service/CorSisFQ/importXMLReportAction', [{ tipo: 'HashMap', valor: { XML_PATH: xmlPath } }], { suppressError: true, ignoreError: true });
+               importHint.textContent = 'Aplicando mudanças...';
+               let nrSeqRelatorio = null;
                try {
-                  const doc2 = new DOMParser().parseFromString(await file.text(), 'text/xml');
-                  const reg2 = doc2.querySelector('Tabela[nm_tabela="W_RELATORIO"] registros registro');
-                  cdRelatorio2 = reg2?.getAttribute('CD_RELATORIO') || '';
+                  const xmlText = await file.text();
+                  const xmlDoc  = new DOMParser().parseFromString(xmlText, 'text/xml');
+                  const reg = xmlDoc.querySelector('Tabela[nm_tabela="W_RELATORIO"] registros registro');
+                  if (reg) nrSeqRelatorio = parseInt(reg.getAttribute('NR_SEQUENCIA'));
                } catch(e) {}
-               edState.reportSeq  = newSeq;
-               edState.reportCode = cdRelatorio2 || String(newSeq);
-               edState.level      = 1;
-               await loadBandsUI();
+               if (!nrSeqRelatorio) throw new Error('Não foi possível extrair NR_SEQUENCIA do XML.');
+               const r3 = await http.post('/TasyAppServer/resources/service/CorSisFQ/atualizarBaseRelatorioImp', [{ tipo: 'HashMap', valor: { NR_SEQUENCIA: nrSeqRelatorio } }], { suppressError: true, ignoreError: true });
+               const newSeq = r3?.data?.dados;
+               ctx.showToast(`Relatório importado! Abrindo editor...`, 'success');
+               closeModal();
+               if (newSeq) {
+                  let cdRelatorio2 = '';
+                  try {
+                     const doc2 = new DOMParser().parseFromString(await file.text(), 'text/xml');
+                     const reg2 = doc2.querySelector('Tabela[nm_tabela="W_RELATORIO"] registros registro');
+                     cdRelatorio2 = reg2?.getAttribute('CD_RELATORIO') || '';
+                  } catch(e) {}
+                  edState.reportSeq  = newSeq;
+                  edState.reportCode = cdRelatorio2 || String(newSeq);
+                  edState.level      = 1;
+                  await loadBandsUI();
+               }
+            } catch(err) {
+               ctx.showToast('Erro ao importar: ' + err.message, 'error');
+               console.error('[Studio] import error:', err);
+               importLabel.style.borderColor   = 'rgba(34,197,94,0.2)';
+               importLabel.style.background    = '#2b2b3e';
+               importLabel.style.pointerEvents = '';
+               importHint.textContent = 'Selecione ou arraste um arquivo .xml para importar';
             }
-         } catch(err) {
-            ctx.showToast('Erro ao importar: ' + err.message, 'error');
-            console.error('[Studio] import error:', err);
-            importLabel.style.borderColor   = 'rgba(34,197,94,0.2)';
-            importLabel.style.background    = '#2b2b3e';
-            importLabel.style.pointerEvents = '';
-            importHint.textContent = 'Selecione ou arraste um arquivo .xml para importar';
          }
+
+         importInput.addEventListener('change', () => { if (importInput.files?.[0]) runImport(importInput.files[0]); });
+         importLabel.addEventListener('dragover',  (e) => { e.preventDefault(); importLabel.style.borderColor = 'rgba(34,197,94,0.8)'; importLabel.style.background = 'rgba(34,197,94,0.08)'; });
+         importLabel.addEventListener('dragleave', () => { importLabel.style.borderColor = 'rgba(34,197,94,0.2)'; importLabel.style.background = '#2b2b3e'; });
+         importLabel.addEventListener('drop', (e) => { e.preventDefault(); const file = e.dataTransfer?.files?.[0]; if (file) runImport(file); });
       }
 
-      importInput.addEventListener('change', () => {
-         if (importInput.files?.[0]) runImport(importInput.files[0]);
-      });
-
-      // Drag & drop
-      importLabel.addEventListener('dragover',  (e) => {
-         e.preventDefault();
-         importLabel.style.borderColor = 'rgba(34,197,94,0.8)';
-         importLabel.style.background  = 'rgba(34,197,94,0.08)';
-      });
-      importLabel.addEventListener('dragleave', () => {
-         importLabel.style.borderColor = 'rgba(34,197,94,0.2)';
-         importLabel.style.background  = '#2b2b3e';
-      });
-      importLabel.addEventListener('drop', (e) => {
-         e.preventDefault();
-         const file = e.dataTransfer?.files?.[0];
-         if (file) runImport(file);
-      });
-
-      // Helper de download genérico
       function triggerDownload(data, filename, mimeType) {
-         const blob = data instanceof ArrayBuffer
-            ? new Blob([data], { type: mimeType })
-            : new Blob([data], { type: mimeType + ';charset=utf-8' });
+         const blob = data instanceof ArrayBuffer ? new Blob([data], { type: mimeType }) : new Blob([data], { type: mimeType + ';charset=utf-8' });
          const url = URL.createObjectURL(blob);
          const a   = document.createElement('a');
          a.href = url; a.download = filename;
