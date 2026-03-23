@@ -216,6 +216,103 @@ window.TasyPdf = window.TasyPdf || {};
     `;
 
       document.body.appendChild(nav);
+       // [HIDE TOGGLE] Pill flutuante para esconder/mostrar o spotlight
+      const pill = document.createElement('div');
+      pill.id = 'tasy-pdf-pill';
+      pill.title = 'Minimizar / Reabrir Studio';
+      pill.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+      Object.assign(pill.style, {
+         position: 'fixed', top: '22px', left: 'calc(50% + 368px)',
+         width: '28px', height: '28px',
+         background: 'rgba(43,43,54,0.75)', border: '1px solid rgba(63,63,90,0.5)',
+         backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
+         color: '#475569', borderRadius: '50%', cursor: 'pointer',
+         zIndex: '999999', display: 'flex', alignItems: 'center', justifyContent: 'center',
+         boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+         transition: 'all 0.2s', fontFamily: 'system-ui,sans-serif'
+      });
+      pill.addEventListener('mouseenter', () => {
+         pill.style.color = '#f1f5f9';
+         pill.style.borderColor = 'rgba(96,165,250,0.5)';
+         pill.style.background = 'rgba(59,130,246,0.15)';
+      });
+      pill.addEventListener('mouseleave', () => {
+         const isHidden = nav.style.display === 'none';
+         pill.style.color = isHidden ? '#60a5fa' : '#475569';
+         pill.style.borderColor = isHidden ? 'rgba(96,165,250,0.4)' : 'rgba(63,63,90,0.5)';
+         pill.style.background = isHidden ? 'rgba(59,130,246,0.1)' : 'rgba(43,43,54,0.75)';
+      });
+      pill.addEventListener('click', () => {
+         const isHidden = nav.style.display === 'none';
+         if (isHidden) {
+
+            nav.style.display = '';
+            nav.style.opacity = '0';
+            nav.style.transform = 'translateX(-50%) scale(0.96)';
+            requestAnimationFrame(() => {
+               nav.style.transition = 'opacity 0.2s ease, transform 0.25s cubic-bezier(0.175,0.885,0.32,1.275)';
+               nav.style.opacity = '0.7';
+               nav.style.transform = 'translateX(-50%) scale(0.98)';
+            });
+
+            pill.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`;
+            pill.style.color = '#475569';
+            pill.style.borderColor = 'rgba(63,63,90,0.5)';
+            pill.style.background = 'rgba(43,43,54,0.75)';
+         } else {
+
+            nav.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+            nav.style.opacity = '0';
+            nav.style.transform = 'translateX(-50%) scale(0.95)';
+            setTimeout(() => { nav.style.display = 'none'; }, 150);
+            pill.innerHTML = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
+            pill.style.color = '#60a5fa';
+            pill.style.borderColor = 'rgba(96,165,250,0.4)';
+            pill.style.background = 'rgba(59,130,246,0.1)';
+         }
+      });
+      document.body.appendChild(pill);
+
+      // [DRAG] Torna o pill arrastável
+      let isDragging = false;
+      let dragOffsetX = 0;
+      let dragOffsetY = 0;
+      let hasMoved = false;
+
+      pill.addEventListener('mousedown', (e) => {
+         isDragging = true;
+         hasMoved = false;
+         dragOffsetX = e.clientX - pill.getBoundingClientRect().left;
+         dragOffsetY = e.clientY - pill.getBoundingClientRect().top;
+         pill.style.transition = 'none';
+         pill.style.cursor = 'grabbing';
+         e.preventDefault();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+         if (!isDragging) return;
+         hasMoved = true;
+         const x = e.clientX - dragOffsetX;
+         const y = e.clientY - dragOffsetY;
+         // Impede sair da tela
+         const maxX = window.innerWidth  - pill.offsetWidth;
+         const maxY = window.innerHeight - pill.offsetHeight;
+         pill.style.left      = Math.max(0, Math.min(x, maxX)) + 'px';
+         pill.style.top       = Math.max(0, Math.min(y, maxY)) + 'px';
+         pill.style.transform = 'none';
+      });
+
+      document.addEventListener('mouseup', () => {
+         if (!isDragging) return;
+         isDragging = false;
+         pill.style.cursor = 'pointer';
+         pill.style.transition = 'all 0.2s';
+      });
+
+      // Bloqueia o click se foi drag (não toggle)
+      pill.addEventListener('click', (e) => {
+         if (hasMoved) { hasMoved = false; e.stopImmediatePropagation(); }
+      }, true);
 
       const input = document.getElementById('tasy-nav-search');
       const refresh = document.getElementById('tasy-nav-refresh');
