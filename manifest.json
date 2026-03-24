@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tasy PDF Auto",
-  "version": "2.0.0",
+  "version": "2.0.5",
   "description": "Gera PDF automaticamente ao salvar no Tasy HTML5",
   "author": "Matteus, Juan, Denes",
   "permissions": ["scripting", "tabs", "webNavigation", "storage"],
