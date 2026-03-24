@@ -743,7 +743,7 @@ window.TasyPdf = window.TasyPdf || {};
                const bs = getBandStyle(b.IE_TIPO_BANDA);
                const fundo = b.DS_COR_FUNDO && b.DS_COR_FUNDO !== 'clWhite' ? b.DS_COR_FUNDO : null;
                return `
-                <div class="tasy-band-item" data-seq="${b.NR_SEQUENCIA}" data-name="${b.DS_BANDA}"
+                <div class="tasy-band-item" draggable="true" data-index="${i}" data-seq="${b.NR_SEQUENCIA}" data-name="${b.DS_BANDA}"
                      style="background:${isCopied ? 'rgba(167,139,250,0.10)' : bs.bg};
                             border:1px solid ${isCopied ? 'rgba(167,139,250,0.6)' : 'rgba(255,255,255,0.07)'};
                             border-radius:10px; cursor:pointer; transition:all 0.18s;
@@ -777,6 +777,7 @@ window.TasyPdf = window.TasyPdf || {};
                 </div>`;
             }).join('') + `</div>`;
 
+         let dragSourceIndex = null;
          edBody.querySelectorAll('.tasy-band-item').forEach(el => {
             const hint = el.querySelector('.tasy-band-copy-hint');
             const delBtn = el.querySelector('.tasy-btn-delete-band');
@@ -788,7 +789,75 @@ window.TasyPdf = window.TasyPdf || {};
                if (hint) hint.style.opacity = '0';
                if (delBtn) { delBtn.style.opacity = '0'; delBtn.style.background = 'rgba(239,68,68,0)'; delBtn.style.color = '#475569'; }
             });
+
+            // Drag and Drop Logic
+            el.addEventListener('dragstart', (e) => {
+               e.dataTransfer.effectAllowed = 'move';
+               dragSourceIndex = parseInt(el.getAttribute('data-index'));
+               el.style.opacity = '0.5';
+            });
+            el.addEventListener('dragover', (e) => {
+               e.preventDefault();
+               e.dataTransfer.dropEffect = 'move';
+               el.style.border = '1px dashed #3b82f6';
+               el.style.transform = 'scale(0.98)';
+            });
+            el.addEventListener('dragleave', (e) => {
+               const isCopied = String(bandClipboard?.bandObj?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
+               el.style.border = isCopied ? '1px solid rgba(167,139,250,0.6)' : '1px solid rgba(255,255,255,0.07)';
+               el.style.transform = 'none';
+            });
+            el.addEventListener('drop', (e) => {
+               e.stopPropagation();
+               const dropTargetIndex = parseInt(el.getAttribute('data-index'));
+               const isCopied = String(bandClipboard?.bandObj?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
+               el.style.border = isCopied ? '1px solid rgba(167,139,250,0.6)' : '1px solid rgba(255,255,255,0.07)';
+               el.style.transform = 'none';
+               
+               if (dragSourceIndex !== null && dragSourceIndex !== dropTargetIndex) {
+                  handleBandReorder(dragSourceIndex, dropTargetIndex);
+               }
+               return false;
+            });
+            el.addEventListener('dragend', () => {
+               el.style.opacity = '1';
+            });
          });
+      }
+
+      async function handleBandReorder(fromIdx, toIdx) {
+         const bands = [...edState.rawBands];
+         // Mapeia os valores atuais de NR_SEQ_APRESENTACAO e os ordena
+         const seqValues = bands.map((b, i) => b.NR_SEQ_APRESENTACAO || (i + 1)).sort((a, b) => a - b);
+         
+         const [movedItem] = bands.splice(fromIdx, 1);
+         bands.splice(toIdx, 0, movedItem);
+
+         const updates = [];
+         bands.forEach((b, i) => {
+             const oldSeq = b.NR_SEQ_APRESENTACAO;
+             const newSeq = seqValues[i];
+             if (oldSeq !== newSeq) {
+                 const oldObjOriginal = { ...b };
+                 b.NR_SEQ_APRESENTACAO = newSeq;
+                 updates.push({ oldBand: oldObjOriginal, newBand: { ...b } });
+             }
+         });
+
+         edState.rawBands = bands;
+         renderBandsUI(); // Update UI optimistically
+
+         if (updates.length > 0) {
+             try {
+                 for (let u of updates) {
+                     await ctx.updateBandObj(u.oldBand, u.newBand);
+                 }
+                 ctx.showToast('Ordem das bandas atualizada com sucesso!', 'success');
+             } catch (err) {
+                 ctx.showToast('Erro ao atualizar ordem. Recarregando...', 'error');
+                 loadBandsUI();
+             }
+         }
       }
 
       edBody.addEventListener('click', (e) => {
