@@ -746,8 +746,9 @@ window.TasyPdf = window.TasyPdf || {};
                 <div class="tasy-band-item" draggable="true" data-index="${i}" data-seq="${b.NR_SEQUENCIA}" data-name="${b.DS_BANDA}"
                      style="background:${isCopied ? 'rgba(167,139,250,0.10)' : bs.bg};
                             border:1px solid ${isCopied ? 'rgba(167,139,250,0.6)' : 'rgba(255,255,255,0.07)'};
-                            border-radius:10px; cursor:pointer; transition:all 0.18s;
-                            display:flex; flex-direction:column; gap:0; position:relative; overflow:hidden;">
+                            border-radius:10px; cursor:grab; transition:all 0.18s;
+                            display:flex; flex-direction:column; gap:0; position:relative; overflow:hidden;
+                            user-select:none; -moz-user-select:none; -webkit-user-select:none;">
                    <div style="height:3px; background:${isCopied ? '#a78bfa' : bs.dot}; border-radius:10px 10px 0 0; opacity:0.7;"></div>
                    <div style="padding:10px 12px 10px 12px;">
                      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:6px; margin-bottom:8px;">
@@ -1240,8 +1241,9 @@ window.TasyPdf = window.TasyPdf || {};
                   style="display:flex; align-items:stretch; border-radius:9px; overflow:hidden;
                          background:${isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'};
                          border:1px solid ${isCopied ? 'rgba(167,139,250,0.45)' : inactive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'};
-                         cursor:pointer; transition:all 0.15s; position:relative;
-                         opacity:${inactive ? '0.45' : '1'};"
+                         cursor:grab; transition:all 0.15s; position:relative;
+                         opacity:${inactive ? '0.45' : '1'};
+                         user-select:none; -moz-user-select:none; -webkit-user-select:none;"
                   onmouseover="this.style.borderColor='rgba(96,165,250,0.45)';this.style.background='rgba(59,130,246,0.05)';this.style.transform='translateX(2px)';"
                   onmouseout="this.style.borderColor='${isCopied ? 'rgba(167,139,250,0.45)' : 'rgba(255,255,255,0.06)'}';this.style.background='${isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'}';this.style.transform='translateX(0)';">
                <div style="width:3px; background:${ft.color}; flex-shrink:0; opacity:0.7;"></div>
