@@ -792,6 +792,7 @@ window.TasyPdf = window.TasyPdf || {};
 
             // Drag and Drop Logic
             el.addEventListener('dragstart', (e) => {
+               window._tasyIsDragging = true;
                e.dataTransfer.effectAllowed = 'move';
                dragSourceIndex = parseInt(el.getAttribute('data-index'));
                el.style.opacity = '0.5';
@@ -817,10 +818,12 @@ window.TasyPdf = window.TasyPdf || {};
                if (dragSourceIndex !== null && dragSourceIndex !== dropTargetIndex) {
                   handleBandReorder(dragSourceIndex, dropTargetIndex);
                }
+               setTimeout(() => { window._tasyIsDragging = false; }, 100);
                return false;
             });
             el.addEventListener('dragend', () => {
                el.style.opacity = '1';
+               setTimeout(() => { window._tasyIsDragging = false; }, 100);
             });
          });
       }
@@ -860,7 +863,16 @@ window.TasyPdf = window.TasyPdf || {};
          }
       }
 
+      window._tasyIsDragging = false;
+      edBody.addEventListener('mousedown', () => { window._tasyIsDragging = false; });
+
       edBody.addEventListener('click', (e) => {
+         if (window._tasyIsDragging) {
+             e.preventDefault();
+             e.stopPropagation();
+             return;
+         }
+
          if (e.target.closest('#ed-btn-add-field')) {
             openCreateFieldModal();
             return;
@@ -1224,7 +1236,7 @@ window.TasyPdf = window.TasyPdf || {};
             const hasBg = f.DS_COR_FUNDO && f.DS_COR_FUNDO !== 'clWhite' && f.IE_TRANSPARENTE !== 'S';
             const bgColor = hasBg ? f.DS_COR_FUNDO : null;
             return `
-             <div class="tasy-field-item" data-seq="${f.NR_SEQUENCIA}"
+             <div class="tasy-field-item" data-seq="${f.NR_SEQUENCIA}" data-index="${i}" draggable="true"
                   style="display:flex; align-items:stretch; border-radius:9px; overflow:hidden;
                          background:${isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'};
                          border:1px solid ${isCopied ? 'rgba(167,139,250,0.45)' : inactive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'};
@@ -1269,6 +1281,55 @@ window.TasyPdf = window.TasyPdf || {};
                </div>
              </div>`;
          }).join('') + `</div>`;
+
+         let dragSourceFieldIndex = null;
+         edBody.querySelectorAll('.tasy-field-item').forEach(el => {
+            el.addEventListener('dragstart', (e) => {
+               window._tasyIsDragging = true;
+               e.dataTransfer.effectAllowed = 'move';
+               dragSourceFieldIndex = parseInt(el.getAttribute('data-index'));
+               el.style.opacity = '0.5';
+            });
+            el.addEventListener('dragover', (e) => {
+               e.preventDefault();
+               e.dataTransfer.dropEffect = 'move';
+               el.style.border = '1px dashed #3b82f6';
+               el.style.transform = 'translateX(2px)';
+            });
+            el.addEventListener('dragleave', (e) => {
+               const inactive = el.style.opacity === '0.45';
+               const isCopied = String(fieldClipboard?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
+               el.style.border = isCopied ? '1px solid rgba(167,139,250,0.45)' : inactive ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(255,255,255,0.06)';
+               el.style.transform = 'none';
+            });
+            el.addEventListener('drop', (e) => {
+               e.stopPropagation();
+               const dropTargetIndex = parseInt(el.getAttribute('data-index'));
+               const inactive = el.style.opacity === '0.45';
+               const isCopied = String(fieldClipboard?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
+               el.style.border = isCopied ? '1px solid rgba(167,139,250,0.45)' : inactive ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(255,255,255,0.06)';
+               el.style.transform = 'none';
+               
+               if (dragSourceFieldIndex !== null && dragSourceFieldIndex !== dropTargetIndex) {
+                  handleFieldReorder(dragSourceFieldIndex, dropTargetIndex);
+               }
+               setTimeout(() => { window._tasyIsDragging = false; }, 100);
+               return false;
+            });
+            el.addEventListener('dragend', () => {
+               const inactive = el.getAttribute('data-inactive') === 'true'; // will be fixed in next line if needed. We already set it in template inline
+               el.style.opacity = el.innerHTML.includes('INATIVO') ? '0.45' : '1';
+               setTimeout(() => { window._tasyIsDragging = false; }, 100);
+            });
+         });
+      }
+
+      function handleFieldReorder(fromIdx, toIdx) {
+         const fields = [...edState.rawFields];
+         const [movedItem] = fields.splice(fromIdx, 1);
+         fields.splice(toIdx, 0, movedItem);
+         edState.rawFields = fields;
+         renderFieldsUI(); // Updates UI locally
       }
 
       async function pasteField() {
