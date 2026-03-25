@@ -5,7 +5,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       extEnabled: true,
       doubleBuffer: true,
       prefetch: true,
-      spotlightSearch: true
+      spotlightSearch: true,
+      reportTypes: ['CMCZ', 'WCTB', 'WMAN', 'W', 'WFIN', 'WPLS']
     }, (prefs) => {
       // Se a extensão estiver desativada pelo menu, não injeta nada
       if (!prefs.extEnabled) return;

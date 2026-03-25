@@ -2019,7 +2019,7 @@ window.TasyPdf = window.TasyPdf || {};
             try {
                if (!ctx.getHttpService()) throw new Error('Angular não está pronto.');
                const param = await (async () => {
-                  const r1 = await ctx.getHttpService().post('/TasyAppServer/resources/service/Report/getReportsData', ctx.buildReportsDataBody(edState.reportCode, 'CMCZ'), { suppressError: true, ignoreError: true });
+                  const r1 = await ctx.getHttpService().post('/TasyAppServer/resources/service/Report/getReportsData', ctx.buildReportsDataBody(edState.reportCode, ctx.prefs?.reportTypes?.[0] || 'CMCZ'), { suppressError: true, ignoreError: true });
                   return r1.data?.reports?.[0];
                })();
                if (!param) throw new Error('Parâmetros do relatório não encontrados');

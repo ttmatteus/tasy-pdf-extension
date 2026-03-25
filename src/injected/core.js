@@ -26,7 +26,7 @@ window.TasyPdf = window.TasyPdf || {};
   }, true);
   // ===========================
 
-  ctx.prefs = window.__tasyPdfPrefs || { doubleBuffer: true, prefetch: true, spotlightSearch: true };
+  ctx.prefs = window.__tasyPdfPrefs || { doubleBuffer: true, prefetch: true, spotlightSearch: true, reportTypes: ['CMCZ', 'WCTB', 'WMAN', 'W', 'WFIN', 'WPLS'] };
 
   ctx.initAngularDependencies();
 
