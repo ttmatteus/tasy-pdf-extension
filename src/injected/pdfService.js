@@ -11,16 +11,16 @@ window.TasyPdf = window.TasyPdf || {};
         if (!scope) continue;
 
         const code = scope.wActivator?.dataSourceRequest?.paramsByName?.CD_RELATORIO;
-        if (code) return { code, type: 'CMCZ' };
+        if (code) return { code, type: ctx.prefs?.reportTypes?.[0] || 'CMCZ' };
 
         if (scope.detailRecord?.CD_RELATORIO) {
-          return { code: scope.detailRecord.CD_RELATORIO, type: 'CMCZ' };
+          return { code: scope.detailRecord.CD_RELATORIO, type: ctx.prefs?.reportTypes?.[0] || 'CMCZ' };
         }
 
         if (scope.selectedRecord?.CD_RELATORIO) {
           return {
             code: scope.selectedRecord.CD_RELATORIO,
-            type: scope.selectedRecord.IE_TIPO_RELATORIO || 'CMCZ'
+            type: scope.selectedRecord.IE_TIPO_RELATORIO || ctx.prefs?.reportTypes?.[0] || 'CMCZ'
           };
         }
       } catch {}

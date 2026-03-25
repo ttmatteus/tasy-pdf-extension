@@ -51,6 +51,7 @@
       letter-spacing: -0.5px;
       background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -237,6 +238,113 @@
       background: var(--border);
       border-radius: 10px;
     }
+
+    /* Report Type Pills */
+    .report-types-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .report-types-section:hover {
+      border-color: var(--primary);
+      box-shadow: 0 8px 16px -8px rgba(0,0,0,0.4);
+    }
+    .report-types-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .report-types-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    .pills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+      min-height: 28px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      transition: all 0.15s;
+      font-family: monospace;
+    }
+    .pill:hover {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.4);
+      color: #fca5a5;
+    }
+    .pill-remove {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      font-size: 13px;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      opacity: 0.7;
+      transition: opacity 0.15s;
+    }
+    .pill-remove:hover { opacity: 1; }
+    .add-flag-row {
+      display: flex;
+      gap: 6px;
+    }
+    .add-flag-input {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-family: monospace;
+      font-weight: 600;
+      outline: none;
+      text-transform: uppercase;
+      transition: border-color 0.2s;
+    }
+    .add-flag-input::placeholder { color: var(--text-muted); font-weight: 400; font-family: inherit; }
+    .add-flag-input:focus { border-color: var(--primary); }
+    .add-flag-btn {
+      background: rgba(59,130,246,0.15);
+      border: 1px solid rgba(59,130,246,0.3);
+      color: #93c5fd;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .add-flag-btn:hover {
+      background: rgba(59,130,246,0.25);
+      border-color: var(--primary);
+      color: white;
+    }
+    .report-types-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 0 0 10px 0;
+      line-height: 1.5;
+    }
   </style>
 </head>
 <body>
@@ -308,6 +416,24 @@
       </label>
     </div>
     <p class="desc">Barra de acesso rápido aos relatórios pelo topo do sistema.</p>
+  </div>
+
+  <div class="report-types-section">
+    <div class="report-types-header">
+      <div class="setting-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+      </div>
+      <span class="report-types-title">Tipos de Relatório</span>
+    </div>
+    <p class="report-types-desc">Flags usadas para buscar e filtrar relatórios no Tasy. A primeira da lista é usada como tipo padrão.</p>
+    <p class="report-types-desc" style="color:#f59e0b;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:7px 10px;margin-bottom:10px;">
+      ⚠️ <strong>Atenção:</strong> você precisa ter <strong>permissão de cadastro</strong> no Tasy para acessar os relatórios de cada flag.
+    </p>
+    <div class="pills-container" id="pillsContainer"></div>
+    <div class="add-flag-row">
+      <input class="add-flag-input" id="newFlagInput" type="text" maxlength="10" placeholder="Ex: WSTE" autocomplete="off" spellcheck="false">
+      <button class="add-flag-btn" id="addFlagBtn">+ Add</button>
+    </div>
   </div>
 
   <div class="history-section">

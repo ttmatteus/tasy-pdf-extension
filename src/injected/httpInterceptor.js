@@ -38,12 +38,17 @@ window.TasyPdf = window.TasyPdf || {};
     try {
       let param = reportParamCache[code];
       if (!param) {
-        const r1 = await http.post(
-          '/TasyAppServer/resources/service/Report/getReportsData',
-          ctx.buildReportsDataBody(code, 'CMCZ')
-        );
-        param = r1.data?.reports?.[0];
-        if (param) reportParamCache[code] = param;
+        const types = ctx.prefs?.reportTypes?.length ? ctx.prefs.reportTypes : ['CMCZ'];
+        for (const t of types) {
+          try {
+            const r1 = await http.post(
+              '/TasyAppServer/resources/service/Report/getReportsData',
+              ctx.buildReportsDataBody(code, t)
+            );
+            param = r1.data?.reports?.[0];
+            if (param) { reportParamCache[code] = param; break; }
+          } catch(e) {}
+        }
       }
       if (!param) return;
 
@@ -112,14 +117,17 @@ window.TasyPdf = window.TasyPdf || {};
   ctx.checkExactReportFallback = async function (code) {
     const http = ctx.getHttpService();
     if (!http) return [];
-    try {
-      const r = await http.post(
-        '/TasyAppServer/resources/service/Report/getReportsData',
-        ctx.buildReportsDataBody(Number(code), 'CMCZ')
-      );
-      const p = r.data?.reports?.[0];
-      if (p) return [{ CD_RELATORIO: p.code, DS_TITULO: p.title || 'Relatório sem Título', NR_SEQUENCIA: p.sequenceId }];
-    } catch (e) { }
+    const types = ctx.prefs?.reportTypes?.length ? ctx.prefs.reportTypes : ['CMCZ'];
+    for (const t of types) {
+      try {
+        const r = await http.post(
+          '/TasyAppServer/resources/service/Report/getReportsData',
+          ctx.buildReportsDataBody(Number(code), t)
+        );
+        const p = r.data?.reports?.[0];
+        if (p) return [{ CD_RELATORIO: p.code, DS_TITULO: p.title || 'Relatório sem Título', NR_SEQUENCIA: p.sequenceId }];
+      } catch (e) { }
+    }
     return [];
   };
 
@@ -180,7 +188,6 @@ window.TasyPdf = window.TasyPdf || {};
         "ieLibera": false,
         "filterValues": {
           "_dimensionValues": {},
-          "IE_TIPO_RELATORIO": "CMCZ",
           "CD_CLASSIF_RELAT": null,
           "NR_SEQ_MODULO": null,
           "CD_PAIS": null,
@@ -206,12 +213,13 @@ window.TasyPdf = window.TasyPdf || {};
 
       const list = extractList(r.data);
       if (list) {
-        ctx.allReports = list.filter(r => r.IE_TIPO_RELATORIO === 'CMCZ');
+        const activeTypes = ctx.prefs?.reportTypes?.length ? ctx.prefs.reportTypes : ['CMCZ'];
+        ctx.allReports = list.filter(r => activeTypes.includes(r.IE_TIPO_RELATORIO));
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           timestamp: Date.now(),
           data: ctx.allReports
         }));
-        console.log('[Tasy PDF] Cache de relatórios atualizado:', ctx.allReports.length, 'itens');
+        console.log('[Tasy PDF] Cache de relatórios atualizado:', ctx.allReports.length, 'itens (tipos:', activeTypes.join(', '), ')');
       }
     } catch (e) {
       console.warn('[Tasy PDF] Erro ao cachear relatórios. Usando fallback via rede (debounced).', e);
