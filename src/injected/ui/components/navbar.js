@@ -214,6 +214,37 @@ window.TasyPdf = window.TasyPdf || {};
                 });
             }
 
+            const previewBtn = document.getElementById('tasy-ed-btn-preview');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', () => {
+                    if (ctx.state.reportCode && ctx.generateManualPdf) {
+                        if (ctx.Toasts) ctx.Toasts.show('Gerando Preview PDF...', 'info');
+                        ctx.generateManualPdf(ctx.state.reportCode);
+                    }
+                });
+            }
+
+            const exportBtn = document.getElementById('tasy-ed-btn-export');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', () => {
+                    if (ctx.ExportService) ctx.ExportService.openExportModal();
+                });
+            }
+
+            const studioImportBtn = document.getElementById('tasy-studio-import-btn');
+            if (studioImportBtn) {
+                studioImportBtn.addEventListener('click', () => {
+                    if (ctx.ExportService) ctx.ExportService.openImportModal();
+                });
+            }
+
+            const spotlightImportBtn = document.getElementById('tasy-spotlight-import-btn');
+            if (spotlightImportBtn) {
+                spotlightImportBtn.addEventListener('click', () => {
+                    if (ctx.ExportService) ctx.ExportService.openImportModal();
+                });
+            }
+
         },
 
         switchView: function (mode) {
