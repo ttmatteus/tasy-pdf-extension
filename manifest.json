@@ -27,6 +27,17 @@
     {
       "resources": [
         "src/injected/pdfService.js",
+        "src/injected/ui/constants/icons.js",
+        "src/injected/ui/state.js",
+        "src/injected/ui/styles.js",
+        "src/injected/ui/components/toasts.js",
+        "src/injected/ui/services/previewService.js",
+        "src/injected/ui/services/exportService.js",
+        "src/injected/ui/components/navbar.js",
+        "src/injected/ui/components/spotlight.js",
+        "src/injected/ui/components/bands.js",
+        "src/injected/ui/components/fields.js",
+        "src/injected/ui/components/fieldForm.js",
         "src/injected/uiManager.js",
         "src/injected/httpInterceptor.js",
         "src/injected/core.js"
