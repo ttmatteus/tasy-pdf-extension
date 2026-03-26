@@ -119,4 +119,8 @@ window.TasyPdf = window.TasyPdf || {};
             }
         }
     };
+    
+    // Manter compatibilidade global de outras partes do sistema
+    ctx.updateOrOpenPreview = ctx.PreviewService.updateOrOpenPreview.bind(ctx.PreviewService);
+
 })(window.TasyPdf);
