@@ -47,7 +47,7 @@ window.TasyPdf = window.TasyPdf || {};
             );
             param = r1.data?.reports?.[0];
             if (param) { reportParamCache[code] = param; break; }
-          } catch(e) {}
+          } catch (e) { }
         }
       }
       if (!param) return;
@@ -67,11 +67,11 @@ window.TasyPdf = window.TasyPdf || {};
       // Adiciona ao histórico (com SeqId do main)
       window.postMessage({
         type: 'TASY_PDF_HISTORY_ADD',
-        payload: { 
-          url: pdfUrl, 
-          code: code, 
+        payload: {
+          url: pdfUrl,
+          code: code,
           seq: param.sequenceId,
-          date: new Date().toLocaleString('pt-BR') 
+          date: new Date().toLocaleString('pt-BR')
         }
       }, '*');
     } catch (e) {
@@ -85,7 +85,7 @@ window.TasyPdf = window.TasyPdf || {};
         pendingGenerationGen = 0;
         // Roda a próxima da fila se não for stale
         if (nextGen === refreshGen) {
-           ctx._doGenerate(nextCode, nextGen);
+          ctx._doGenerate(nextCode, nextGen);
         }
       }
     }
@@ -294,19 +294,19 @@ window.TasyPdf = window.TasyPdf || {};
       tableDescription: 'BANDA_RELAT_CAMPO_260_96200_dg',
       paramKey: 'NR_SEQ_BANDA',
       allAttributes: [
-        'DS_MASCARA','IE_HUMANO_BARCODE','DS_OBSERVACAO','NR_SEQ_LOGO',
-        'IE_ZERA_APOS_IMPRIMIR','QT_ALTURA','DS_EXPRESSAO','IE_TRANSPARENTE',
-        'IE_CAMPO_QUEBRA','PR_ALTURA_BARCODE','IE_INFO_PACIENTE','IE_BORDA_ESQ',
-        'IE_POSICAO_LEGENDA','QT_FONTE_BARCODE','DS_ESTILO_FONTE','IE_BORDA_DIR',
-        'IE_TIPO_BARCODE','DS_CONTEUDO_RICH','IE_MARCADOR','IE_TOTALIZAR',
-        'IE_ALINHAMENTO','IE_METODO_ESTENDER','IE_DATAMATRIX_MODULE','IE_TIPO_DESENHO',
-        'IE_TIPO_CAMPO','NM_TIME_ZONE_ATTRIBUTE','IE_SENSIVEL','DS_COR_LABEL',
-        'IE_BORDA_INF','NR_SEQUENCIA','DS_SQL','DS_COR_FUNDO','IE_ALTERA_VALOR',
-        'DS_ALINHAMENTO','IE_ESTENDER','QT_TAM_FONTE','DS_TEXTO_BARRAS','QT_TOPO',
-        'NR_SEQ_BANDA','QT_TAMANHO','NM_ATRIBUTO','DS_CONTEUDO','IE_ALINHAR_BANDA',
-        'IE_SITUACAO','IE_BORDA_SUP','DS_COR_FONTE','IE_DATE_TYPE','DS_TIPO_FONTE',
-        'IE_QUEBRA_PAGINA','IE_AJUSTAR_TAMANHO','DS_CAMPO','DT_ATUALIZACAO',
-        'QT_ESQUERDA','IE_TIPO_CHART','NM_USUARIO','QT_POS_ESQUERDA','DS_LABEL',
+        'DS_MASCARA', 'IE_HUMANO_BARCODE', 'DS_OBSERVACAO', 'NR_SEQ_LOGO',
+        'IE_ZERA_APOS_IMPRIMIR', 'QT_ALTURA', 'DS_EXPRESSAO', 'IE_TRANSPARENTE',
+        'IE_CAMPO_QUEBRA', 'PR_ALTURA_BARCODE', 'IE_INFO_PACIENTE', 'IE_BORDA_ESQ',
+        'IE_POSICAO_LEGENDA', 'QT_FONTE_BARCODE', 'DS_ESTILO_FONTE', 'IE_BORDA_DIR',
+        'IE_TIPO_BARCODE', 'DS_CONTEUDO_RICH', 'IE_MARCADOR', 'IE_TOTALIZAR',
+        'IE_ALINHAMENTO', 'IE_METODO_ESTENDER', 'IE_DATAMATRIX_MODULE', 'IE_TIPO_DESENHO',
+        'IE_TIPO_CAMPO', 'NM_TIME_ZONE_ATTRIBUTE', 'IE_SENSIVEL', 'DS_COR_LABEL',
+        'IE_BORDA_INF', 'NR_SEQUENCIA', 'DS_SQL', 'DS_COR_FUNDO', 'IE_ALTERA_VALOR',
+        'DS_ALINHAMENTO', 'IE_ESTENDER', 'QT_TAM_FONTE', 'DS_TEXTO_BARRAS', 'QT_TOPO',
+        'NR_SEQ_BANDA', 'QT_TAMANHO', 'NM_ATRIBUTO', 'DS_CONTEUDO', 'IE_ALINHAR_BANDA',
+        'IE_SITUACAO', 'IE_BORDA_SUP', 'DS_COR_FONTE', 'IE_DATE_TYPE', 'DS_TIPO_FONTE',
+        'IE_QUEBRA_PAGINA', 'IE_AJUSTAR_TAMANHO', 'DS_CAMPO', 'DT_ATUALIZACAO',
+        'QT_ESQUERDA', 'IE_TIPO_CHART', 'NM_USUARIO', 'QT_POS_ESQUERDA', 'DS_LABEL',
         'NR_SEQ_APRESENTACAO'
       ]
     };
@@ -315,14 +315,14 @@ window.TasyPdf = window.TasyPdf || {};
       tableDescription: 'BANDA_RELATORIO_260_96201_dg',
       paramKey: 'NR_SEQ_RELATORIO',
       allAttributes: [
-        'IE_ALTERNA_COR_FUNDO','DS_OBSERVACAO','DS_COR_HEADER','DS_REGRA',
-        'QT_ALTURA','DS_EXPRESSAO','IE_FUNDO_TRANSPARENTE','QT_MAX_REGISTRO',
-        'IE_BORDA_ESQ','IE_IMPRIME_VAZIO','IE_SITUACAO','DS_COR_FOOTER',
-        'IE_BORDA_SUP','IE_BORDA_DIR','IE_BANDA_PADRAO','IE_QUEBRA_PAGINA',
-        'NR_SEQ_RELATORIO','DT_ATUALIZACAO','DS_BANDA_SUPERIORA',
-        'NR_SEQ_BANDA_SUPERIOR','IE_TIPO_BANDA','NM_USUARIO','DS_COR_QUEBRA',
-        'NM_TABELA','DS_BANDA','IE_IMPRIME_PRIMEIRO','IE_BORDA_INF','NR_SEQUENCIA',
-        'DS_SQL','IE_DIRECTION','DS_COR_FUNDO','IE_REIMPRIME_NOVA_PAGINA',
+        'IE_ALTERNA_COR_FUNDO', 'DS_OBSERVACAO', 'DS_COR_HEADER', 'DS_REGRA',
+        'QT_ALTURA', 'DS_EXPRESSAO', 'IE_FUNDO_TRANSPARENTE', 'QT_MAX_REGISTRO',
+        'IE_BORDA_ESQ', 'IE_IMPRIME_VAZIO', 'IE_SITUACAO', 'DS_COR_FOOTER',
+        'IE_BORDA_SUP', 'IE_BORDA_DIR', 'IE_BANDA_PADRAO', 'IE_QUEBRA_PAGINA',
+        'NR_SEQ_RELATORIO', 'DT_ATUALIZACAO', 'DS_BANDA_SUPERIORA',
+        'NR_SEQ_BANDA_SUPERIOR', 'IE_TIPO_BANDA', 'NM_USUARIO', 'DS_COR_QUEBRA',
+        'NM_TABELA', 'DS_BANDA', 'IE_IMPRIME_PRIMEIRO', 'IE_BORDA_INF', 'NR_SEQUENCIA',
+        'DS_SQL', 'IE_DIRECTION', 'DS_COR_FUNDO', 'IE_REIMPRIME_NOVA_PAGINA',
         'NR_SEQ_APRESENTACAO'
       ]
     };
@@ -427,7 +427,7 @@ window.TasyPdf = window.TasyPdf || {};
           out[k] = v;
         } else {
           // Garante que a string está em ISO 8601 — o servidor rejeita qualquer outro formato
-          // Ex: "Sun Mar 22 2026 13:12:18 GMT-0300" → "2026-03-22T16:12:18.000Z"
+
           let isoStr = String(v);
           if (!isoStr.match(/^\d{4}-\d{2}-\d{2}T/)) {
             // Não é ISO — tenta parsear via Date()
@@ -453,7 +453,7 @@ window.TasyPdf = window.TasyPdf || {};
 
     const registro = sanitizeForServer(obj);
     // records mantém _hashCode pois o sniffer mostrou que ele manda junto
-    const records  = [{ ...registro, _hashCode: obj._hashCode, PAGING_RN: obj.PAGING_RN }];
+    const records = [{ ...registro, _hashCode: obj._hashCode, PAGING_RN: obj.PAGING_RN }];
 
     const header = buildDatasourceHeader(tableName, { pkValue, inicioPagina: 0 });
     const body = JSON.stringify([
@@ -522,12 +522,12 @@ window.TasyPdf = window.TasyPdf || {};
   // Clona um campo — cria cópia idêntica logo abaixo do original.
   ctx.cloneFieldObj = async function (fieldObj) {
     if (!fieldObj?.NR_SEQ_BANDA) throw new Error('[cloneFieldObj] fieldObj sem NR_SEQ_BANDA.');
-    const SKIP = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','QT_POS_ESQUERDA','DS_ALINHAMENTO','_hashCode','PAGING_RN']);
+    const SKIP = new Set(['NR_SEQUENCIA', 'DT_ATUALIZACAO', 'NM_USUARIO', 'QT_POS_ESQUERDA', 'DS_ALINHAMENTO', '_hashCode', 'PAGING_RN']);
     const overrides = {};
     for (const [k, v] of Object.entries(fieldObj)) {
       if (!SKIP.has(k)) overrides[k] = v;
     }
-    overrides.QT_TOPO  = (Number(fieldObj.QT_TOPO)   || 0) + (Number(fieldObj.QT_ALTURA) || 17);
+    overrides.QT_TOPO = (Number(fieldObj.QT_TOPO) || 0) + (Number(fieldObj.QT_ALTURA) || 17);
     if (fieldObj.DS_CAMPO) overrides.DS_CAMPO = fieldObj.DS_CAMPO + '_COPIA';
     const cloned = await ctx.insertFieldObj(fieldObj.NR_SEQ_BANDA, overrides);
     console.log('[Tasy PDF] CLONE campo:', fieldObj.NR_SEQUENCIA, '→', cloned.NR_SEQUENCIA);
@@ -543,28 +543,28 @@ window.TasyPdf = window.TasyPdf || {};
   // ex: { DS_BANDA: 'Cabeçalho Novo', IE_TIPO_BANDA: 'H', QT_ALTURA: 30 }
   ctx.insertBandObj = async function (nrSeqRelatorio, overrides = {}) {
     return performInsert('BANDA_RELATORIO', nrSeqRelatorio, overrides, {
-      IE_SITUACAO:            'A',
-      IE_TIPO_BANDA:          'D',   // D = Detalhe (tipo mais comum)
-      IE_BANDA_PADRAO:        'N',
-      IE_QUEBRA_PAGINA:       'N',
-      IE_IMPRIME_VAZIO:       'N',
-      IE_IMPRIME_PRIMEIRO:    'N',
+      IE_SITUACAO: 'A',
+      IE_TIPO_BANDA: 'D',   // D = Detalhe (tipo mais comum)
+      IE_BANDA_PADRAO: 'N',
+      IE_QUEBRA_PAGINA: 'N',
+      IE_IMPRIME_VAZIO: 'N',
+      IE_IMPRIME_PRIMEIRO: 'N',
       IE_REIMPRIME_NOVA_PAGINA: 'N',
-      IE_FUNDO_TRANSPARENTE:  'S',
-      IE_ALTERNA_COR_FUNDO:   'N',
-      IE_BORDA_SUP:           'N',
-      IE_BORDA_INF:           'N',
-      IE_BORDA_ESQ:           'N',
-      IE_BORDA_DIR:           'N',
-      IE_DIRECTION:           'H',
-      DS_COR_FUNDO:           'clWhite',
-      DS_COR_HEADER:          'clWhite',
-      DS_COR_FOOTER:          'clWhite',
-      DS_COR_QUEBRA:          'clWhite',
-      QT_ALTURA:              20,
-      QT_MAX_REGISTRO:        0,
-      DS_SQL:                 '',
-      DS_BANDA:               overrides.DS_BANDA || 'Nova Banda'
+      IE_FUNDO_TRANSPARENTE: 'S',
+      IE_ALTERNA_COR_FUNDO: 'N',
+      IE_BORDA_SUP: 'N',
+      IE_BORDA_INF: 'N',
+      IE_BORDA_ESQ: 'N',
+      IE_BORDA_DIR: 'N',
+      IE_DIRECTION: 'H',
+      DS_COR_FUNDO: 'clWhite',
+      DS_COR_HEADER: 'clWhite',
+      DS_COR_FOOTER: 'clWhite',
+      DS_COR_QUEBRA: 'clWhite',
+      QT_ALTURA: 20,
+      QT_MAX_REGISTRO: 0,
+      DS_SQL: '',
+      DS_BANDA: overrides.DS_BANDA || 'Nova Banda'
     });
   };
 
@@ -581,7 +581,7 @@ window.TasyPdf = window.TasyPdf || {};
 
     // 1. Busca todos os campos da banda
     let fields = [];
-    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) {}
+    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) { }
 
     // 2. Deleta cada campo sequencialmente
     for (let i = 0; i < fields.length; i++) {
@@ -600,7 +600,7 @@ window.TasyPdf = window.TasyPdf || {};
   // Se fetchFields não retornar campos, clona só a banda.
   ctx.cloneBandObj = async function (bandObj) {
     if (!bandObj?.NR_SEQ_RELATORIO) throw new Error('[cloneBandObj] bandObj sem NR_SEQ_RELATORIO.');
-    const SKIP = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','_hashCode','PAGING_RN','NR_SEQ_APRESENTACAO']);
+    const SKIP = new Set(['NR_SEQUENCIA', 'DT_ATUALIZACAO', 'NM_USUARIO', '_hashCode', 'PAGING_RN', 'NR_SEQ_APRESENTACAO']);
 
     // Cria a banda clone
     const bandOverrides = {};
@@ -612,9 +612,9 @@ window.TasyPdf = window.TasyPdf || {};
 
     // Clona os campos da banda original para a nova banda
     let fields = [];
-    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) {}
+    try { fields = await ctx.fetchFields(bandObj.NR_SEQUENCIA); } catch (e) { }
 
-    const SKIP_FIELD = new Set(['NR_SEQUENCIA','DT_ATUALIZACAO','NM_USUARIO','QT_POS_ESQUERDA','DS_ALINHAMENTO','_hashCode','PAGING_RN','NR_SEQ_BANDA']);
+    const SKIP_FIELD = new Set(['NR_SEQUENCIA', 'DT_ATUALIZACAO', 'NM_USUARIO', 'QT_POS_ESQUERDA', 'DS_ALINHAMENTO', '_hashCode', 'PAGING_RN', 'NR_SEQ_BANDA']);
     for (const f of fields) {
       const fo = {};
       for (const [k, v] of Object.entries(f)) {
@@ -631,10 +631,10 @@ window.TasyPdf = window.TasyPdf || {};
   // Atualiza campos de uma banda existente (equivalente ao updateFieldObj para campos).
   // ex: await TasyPdf.updateBandObj(oldBand, { ...oldBand, QT_ALTURA: 40 })
   ctx.updateBandObj = async function (oldObj, newObj) {
-    newObj.DS_COR_FUNDO   = ctx.hexToTasy(newObj.DS_COR_FUNDO   || oldObj.DS_COR_FUNDO);
-    newObj.DS_COR_HEADER  = ctx.hexToTasy(newObj.DS_COR_HEADER  || oldObj.DS_COR_HEADER);
-    newObj.DS_COR_FOOTER  = ctx.hexToTasy(newObj.DS_COR_FOOTER  || oldObj.DS_COR_FOOTER);
-    newObj.DS_COR_QUEBRA  = ctx.hexToTasy(newObj.DS_COR_QUEBRA  || oldObj.DS_COR_QUEBRA);
+    newObj.DS_COR_FUNDO = ctx.hexToTasy(newObj.DS_COR_FUNDO || oldObj.DS_COR_FUNDO);
+    newObj.DS_COR_HEADER = ctx.hexToTasy(newObj.DS_COR_HEADER || oldObj.DS_COR_HEADER);
+    newObj.DS_COR_FOOTER = ctx.hexToTasy(newObj.DS_COR_FOOTER || oldObj.DS_COR_FOOTER);
+    newObj.DS_COR_QUEBRA = ctx.hexToTasy(newObj.DS_COR_QUEBRA || oldObj.DS_COR_QUEBRA);
 
     const header = buildDatasourceHeader('BANDA_RELATORIO', { pkValue: oldObj.NR_SEQ_RELATORIO });
     const http = ctx.getHttpService();
@@ -709,8 +709,8 @@ window.TasyPdf = window.TasyPdf || {};
   ctx.initAngularDependencies = function () {
     if (!ctx.getHttpService()) {
       if (++initAttempts > 30) {
-          console.warn('[Tasy PDF] Desistindo de encontrar Angular após 30 tentativas.');
-          return;
+        console.warn('[Tasy PDF] Desistindo de encontrar Angular após 30 tentativas.');
+        return;
       }
       setTimeout(ctx.initAngularDependencies, 1000);
       return;
