@@ -1319,7 +1319,6 @@ window.TasyPdf = window.TasyPdf || {};
                return false;
             });
             el.addEventListener('dragend', () => {
-               const inactive = el.getAttribute('data-inactive') === 'true'; // will be fixed in next line if needed. We already set it in template inline
                el.style.opacity = el.innerHTML.includes('INATIVO') ? '0.45' : '1';
                setTimeout(() => { window._tasyIsDragging = false; }, 100);
             });
@@ -1350,16 +1349,24 @@ window.TasyPdf = window.TasyPdf || {};
          }
       }
 
+      // ══════════════════════════════════════════════════════════════════
+      // FIX: Ctrl+C / Ctrl+V para CAMPOS (level 2)
+      // Não intercepta quando o foco está em input/textarea/select
+      // ══════════════════════════════════════════════════════════════════
       document.addEventListener('keydown', (e) => {
          if (edState.level !== 2) return;
          const isCopy  = (e.ctrlKey || e.metaKey) && e.key === 'c';
          const isPaste = (e.ctrlKey || e.metaKey) && e.key === 'v';
          if (!isCopy && !isPaste) return;
 
+         // Não intercepta se o foco estiver em um campo de texto nativo
+         const tag = document.activeElement?.tagName?.toLowerCase();
+         if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
          if (isCopy) {
-            e.preventDefault();
             const hovered = edBody.querySelector('.tasy-field-item:hover');
             if (!hovered) { ctx.showToast('Passe o mouse sobre um campo e aperte Ctrl+C', 'info'); return; }
+            e.preventDefault();
             const seq = hovered.getAttribute('data-seq');
             const fieldObj = edState.rawFields.find(f => String(f.NR_SEQUENCIA) === String(seq));
             if (!fieldObj) return;
@@ -1391,18 +1398,24 @@ window.TasyPdf = window.TasyPdf || {};
          }
       }
 
+
+      // Ctrl+C / Ctrl+V para BANDAS (level 1)
       document.addEventListener('keydown', async (e) => {
          if (edState.level !== 1) return;
          const isCopy  = (e.ctrlKey || e.metaKey) && e.key === 'c';
          const isPaste = (e.ctrlKey || e.metaKey) && e.key === 'v';
          if (!isCopy && !isPaste) return;
 
+         // Não intercepta se o foco estiver em um campo de texto nativo
+         const tag = document.activeElement?.tagName?.toLowerCase();
+         if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
          const hovered = edBody.querySelector('.tasy-band-item:hover');
 
          if (isCopy) {
-            e.preventDefault();
             const target = hovered;
             if (!target) { ctx.showToast('Passe o mouse sobre uma banda e aperte Ctrl+C', 'info'); return; }
+            e.preventDefault();
             const seq = target.getAttribute('data-seq');
             const bandObj = edState.rawBands.find(b => String(b.NR_SEQUENCIA) === String(seq));
             if (!bandObj) return;
@@ -1443,24 +1456,24 @@ window.TasyPdf = window.TasyPdf || {};
          const iconsSerialized = JSON.stringify(icons);
          editorWindow.document.open();
          editorWindow.document.write(`<!DOCTYPE html>
-<html>
-<head>
-  <title>Studio — ${f.DS_CAMPO || 'Campo'} [${edState.reportCode}]</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #111116; font-family: system-ui, sans-serif; overflow: hidden; }
-    input, select { color-scheme: dark; }
-    input:focus, select:focus { border-color: #3b82f6 !important; background: rgba(59,130,246,0.05) !important; outline: none; }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #3f3f5a; border-radius: 3px; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  </style>
-</head>
-<body>
-  <div id="root" style="width:100vw;height:100vh;display:flex;flex-direction:column;"></div>
-</body>
-</html>`);
+            <html>
+               <head>
+               <title>Studio — ${f.DS_CAMPO || 'Campo'} [${edState.reportCode}]</title>
+               <style>
+                  * { box-sizing: border-box; margin: 0; padding: 0; }
+                  body { background: #111116; font-family: system-ui, sans-serif; overflow: hidden; }
+                  input, select { color-scheme: dark; }
+                  input:focus, select:focus { border-color: #3b82f6 !important; background: rgba(59,130,246,0.05) !important; outline: none; }
+                  ::-webkit-scrollbar { width: 6px; }
+                  ::-webkit-scrollbar-track { background: transparent; }
+                  ::-webkit-scrollbar-thumb { background: #3f3f5a; border-radius: 3px; }
+                  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+               </style>
+               </head>
+               <body>
+               <div id="root" style="width:100vw;height:100vh;display:flex;flex-direction:column;"></div>
+               </body>
+            </html>`);
          editorWindow.document.close();
 
          // Aguarda DOM estar pronto
