@@ -5,7 +5,7 @@
   "description": "Gera PDF automaticamente ao salvar no Tasy HTML5",
   "author": "Matteus, Juan, Denes",
   "permissions": ["scripting", "tabs", "webNavigation", "storage"],
-  "host_permissions": ["*://*/*"],
+  "host_permissions": ["*://*.unimedmaceio.com.br/*"],
   "icons": {
     "512": "icon.png"
   },
@@ -18,7 +18,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://*/*"],
+      "matches": ["*://*.unimedmaceio.com.br/*"],
       "js": ["src/content/contentBridge.js"],
       "run_at": "document_start"
     }
@@ -42,7 +42,7 @@
         "src/injected/httpInterceptor.js",
         "src/injected/core.js"
       ],
-      "matches": ["*://*/*"]
+      "matches": ["*://*.unimedmaceio.com.br/*"]
     }
   ]
 }
