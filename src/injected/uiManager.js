@@ -7,15 +7,19 @@ window.TasyPdf = window.TasyPdf || {};
 
         // Detecção do Tasy: procura por elementos específicos ou presença do Angular
         const hasTasyMarkers = !!document.querySelector('div.wdbpanel, div.wcpanel, [w-activator], [wactivator]');
-        const isTasyUrl = location.href.toLowerCase().includes('tasy') || location.href.toLowerCase().includes('philips');
+        const isTasyUrl = location.href.toLowerCase().includes('unimedmaceio.com.br');
 
-        if (!hasTasyMarkers && !isTasyUrl && !window.angular) {
-            // Se não encontrou markers, tenta novamente em 2s (o Tasy pode demorar a carregar)
-            if (!this._initAttempts) this._initAttempts = 0;
-            if (this._initAttempts < 3) {
-                this._initAttempts++;
-                setTimeout(() => ctx.init(), 2000);
+        // Se ainda não encontrou nem markers do Tasy nem o Angular
+        if (!hasTasyMarkers && !window.angular) {
+            // Mas parece ser uma URL do Tasy, então vamos esperar carregar...
+            if (isTasyUrl) {
+                if (!this._initAttempts) this._initAttempts = 0;
+                if (this._initAttempts < 5) { // Tenta por 10 segundos
+                    this._initAttempts++;
+                    setTimeout(() => ctx.init(), 2000);
+                }
             }
+            // Retorna pois ainda não está pronto para injetar (ou nunca estará)
             return;
         }
 
