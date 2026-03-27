@@ -14,23 +14,27 @@ window.TasyPdf = window.TasyPdf || {};
             }
 
             const toast = document.createElement('div');
-            const bg = type === 'error' ? '#ef4444' : (type === 'success' ? '#10b981' : '#3b82f6');
+            let iconText = type === 'error' ? '✕' : (type === 'success' ? '✓' : 'ℹ');
+            let color = type === 'error' ? 'var(--tasy-danger)' : (type === 'success' ? 'var(--tasy-success)' : 'var(--tasy-text-main)');
+            
             Object.assign(toast.style, {
-                background: bg, color: 'white', padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontFamily: 'sans-serif',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)', opacity: '0', transform: 'translateX(20px)', transition: 'all 0.3s ease-out'
+                background: 'var(--tasy-bg-hover)', color: 'var(--tasy-text-main)', padding: '12px 16px', borderRadius: 'var(--tasy-radius-sm)',
+                border: '1px solid var(--tasy-border)', fontSize: '13px', fontFamily: '"Inter", system-ui, sans-serif', fontWeight: '500',
+                boxShadow: 'var(--tasy-shadow-sm)', opacity: '0', transform: 'translateY(10px) scale(0.95)', transition: 'all 0.35s var(--tasy-spring)',
+                display: 'flex', alignItems: 'center', gap: '8px'
             });
-            toast.innerText = msg;
+            toast.innerHTML = `<span style="color:${color};font-weight:700;">${iconText}</span> <span>${msg}</span>`;
             container.appendChild(toast);
 
             requestAnimationFrame(() => {
                 toast.style.opacity = '1';
-                toast.style.transform = 'translateX(0)';
+                toast.style.transform = 'translateY(0) scale(1)';
             });
 
             setTimeout(() => {
                 toast.style.opacity = '0';
-                toast.style.transform = 'translateX(20px)';
-                setTimeout(() => toast.remove(), 300);
+                toast.style.transform = 'translateY(10px) scale(0.95)';
+                setTimeout(() => toast.remove(), 350);
             }, 4000);
         }
     };

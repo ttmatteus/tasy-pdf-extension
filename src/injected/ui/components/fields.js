@@ -24,17 +24,15 @@ window.TasyPdf = window.TasyPdf || {};
             const fields = state.rawFields;
 
             const addBtn = `
-                <button id="ed-btn-add-field"
-                  style="width:100%; padding:10px; background:rgba(16,185,129,0.1); color:#34d399; border:1px dashed rgba(16,185,129,0.4); border-radius:8px; font-weight:600; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.2s; margin-bottom:8px;"
-                  onmouseover="this.style.background='rgba(16,185,129,0.18)'" onmouseout="this.style.background='rgba(16,185,129,0.1)'">
-                  ${Icons.add} Novo Campo
+                <button id="ed-btn-add-field" class="tasy-btn-ghost"
+                  style="width:100%; padding:10px; border:1px dashed var(--tasy-border); border-radius:var(--tasy-radius-sm); font-weight:600; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;">
+                  <span style="display:flex;color:var(--tasy-text-muted);">${Icons.add}</span> Novo Campo
                 </button>`;
 
             const pasteBtn = ctx.fieldClipboard ? `
-                <button id="ed-btn-paste-field"
-                  style="width:100%; padding:10px; background:rgba(167,139,250,0.1); color:#a78bfa; border:1px dashed rgba(167,139,250,0.4); border-radius:8px; font-weight:600; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px; transition:all 0.2s;"
-                  onmouseover="this.style.background='rgba(167,139,250,0.2)'" onmouseout="this.style.background='rgba(167,139,250,0.1)'">
-                  ${Icons.clone} Colar "${ctx.fieldClipboard.DS_CAMPO || 'Campo'}" &nbsp;<kbd style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:1px 5px;font-size:10px;">Ctrl+V</kbd>
+                <button id="ed-btn-paste-field" class="tasy-btn-ghost"
+                  style="width:100%; padding:10px; border:1px dashed var(--tasy-border); border-radius:var(--tasy-radius-sm); font-weight:600; font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:8px;">
+                  <span style="display:flex;color:var(--tasy-text-muted);">${Icons.clone}</span> Colar "${ctx.fieldClipboard.DS_CAMPO || 'Campo'}" &nbsp;<kbd style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);border-radius:4px;padding:1px 5px;font-size:10px;color:var(--tasy-text-muted);">Ctrl+V</kbd>
                 </button>` : '';
 
             if (fields.length === 0) {
@@ -43,15 +41,15 @@ window.TasyPdf = window.TasyPdf || {};
             }
 
             const fieldTypeLabel = {
-                '1': { label: 'Texto', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
-                '0': { label: 'Atributo', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
-                '11': { label: 'HTML', color: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-                '28': { label: 'Imagem', color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-                '21': { label: 'Pág.', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+                '1': { label: 'Texto', color: 'var(--tasy-text-main)' },
+                '0': { label: 'Atributo', color: 'var(--tasy-text-main)' },
+                '11': { label: 'HTML', color: 'var(--tasy-text-muted)' },
+                '28': { label: 'Imagem', color: 'var(--tasy-text-muted)' },
+                '21': { label: 'Pág.', color: 'var(--tasy-text-muted)' },
             };
-            const getFT = (t) => fieldTypeLabel[String(t)] || { label: 'Tipo ' + t, color: '#94a3b8', bg: 'rgba(148,163,184,0.08)' };
+            const getFT = (t) => fieldTypeLabel[String(t)] || { label: 'Tipo ' + t, color: 'var(--tasy-text-muted)' };
 
-            edBody.innerHTML = addBtn + pasteBtn + `<div style="display:flex; flex-direction:column; gap:5px;">` + fields.map((f, i) => {
+            edBody.innerHTML = addBtn + pasteBtn + `<div style="display:flex; flex-direction:column; gap:6px;">` + fields.map((f, i) => {
                 const isActive = state.activeField?.NR_SEQUENCIA === f.NR_SEQUENCIA;
                 const isCopied = ctx.fieldClipboard?.NR_SEQUENCIA === f.NR_SEQUENCIA;
                 const ft = getFT(f.IE_TIPO_CAMPO);
@@ -62,47 +60,45 @@ window.TasyPdf = window.TasyPdf || {};
                 const bgColor = hasBg ? f.DS_COR_FUNDO : null;
                 return `
                 <div class="tasy-field-item" data-seq="${f.NR_SEQUENCIA}" data-index="${i}" draggable="true"
-                     style="display:flex; align-items:stretch; border-radius:9px; overflow:hidden;
-                            background:${isActive ? 'rgba(59,130,246,0.08)' : isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'};
-                            border:1px solid ${isActive ? '#3b82f6' : isCopied ? 'rgba(167,139,250,0.45)' : inactive ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)'};
-                            cursor:grab; transition:all 0.15s; position:relative;
-                            box-shadow:${isActive ? '0 0 0 1px rgba(59,130,246,0.2)' : 'none'};
-                            opacity:${inactive ? '0.45' : '1'};
-                            user-select:none; -moz-user-select:none; -webkit-user-select:none;"
-                     onmouseover="this.style.borderColor='rgba(96,165,250,0.45)';this.style.background='rgba(59,130,246,0.05)';this.style.transform='translateX(2px)';"
-                     onmouseout="this.style.borderColor='${isCopied ? 'rgba(167,139,250,0.45)' : 'rgba(255,255,255,0.06)'}';this.style.background='${isCopied ? 'rgba(167,139,250,0.07)' : 'rgba(43,43,54,0.9)'}';this.style.transform='translateX(0)';">
-                  <div style="width:3px; background:${ft.color}; flex-shrink:0; opacity:0.7;"></div>
-                  <div style="width:28px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-right:1px solid rgba(255,255,255,0.04);">
-                    <span style="color:#334155; font-size:9px; font-weight:600;">${i + 1}</span>
+                     style="display:flex; align-items:stretch; border-radius:var(--tasy-radius-sm);
+                             background:${isActive ? 'var(--tasy-bg-hover)' : isCopied ? 'var(--tasy-bg-hover)' : 'var(--tasy-bg-base)'};
+                             border:1px solid ${isActive ? 'var(--tasy-text-main)' : isCopied ? 'var(--tasy-text-main)' : 'var(--tasy-border)'};
+                             box-shadow:${isActive ? '0 4px 12px rgba(0,0,0,0.5)' : 'none'};
+                             z-index:${isActive ? '10' : '1'};
+                             cursor:grab; transition:all 0.15s; position:relative;
+                             opacity:${inactive ? '0.5' : '1'};
+                             user-select:none; -moz-user-select:none; -webkit-user-select:none;">
+                  <div style="width:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-right:1px solid var(--tasy-border); background:var(--tasy-bg-hover);">
+                    <span style="color:var(--tasy-text-muted); font-size:10px; font-weight:500;" title="Ordem de Apresentação">${f.NR_SEQ_APRESENTACAO || (i + 1)}</span>
                   </div>
-                  <div style="flex:1; padding:8px 10px; display:flex; flex-direction:column; gap:5px; min-width:0;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span style="color:#e2e8f0; font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${f.DS_CAMPO || '—'}</span>
-                      ${isCopied ? `<span style="background:rgba(167,139,250,0.2);color:#a78bfa;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;">COPIADO</span>` : ''}
-                      ${inactive ? `<span style="background:rgba(239,68,68,0.12);color:#ef4444;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;">INATIVO</span>` : ''}
+                  <div style="flex:1; padding:10px 12px; display:flex; flex-direction:column; gap:6px; min-width:0;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <span style="color:var(--tasy-text-main); font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1;">${f.DS_CAMPO || '—'}</span>
+                      ${isCopied ? `<span style="background:var(--tasy-text-main);color:var(--tasy-bg-base);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;">COPIADO</span>` : ''}
+                      ${inactive ? `<span style="background:var(--tasy-danger-bg);color:var(--tasy-danger);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;">INATIVO</span>` : ''}
                     </div>
-                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                      <span style="background:${ft.bg};color:${ft.color};border-radius:4px;padding:1px 6px;font-size:9px;font-weight:600;">${ft.label}</span>
-                      <span style="background:rgba(129,140,248,0.08);color:#818cf8;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">X:${f.QT_ESQUERDA || 0}</span>
-                      <span style="background:rgba(52,211,153,0.08);color:#34d399;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">Y:${f.QT_TOPO || 0}</span>
-                      <span style="background:rgba(251,191,36,0.08);color:#fbbf24;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">W:${f.QT_TAMANHO || 0}</span>
-                      <span style="background:rgba(248,113,113,0.08);color:#f87171;border-radius:4px;padding:1px 5px;font-size:9px;font-family:monospace;">H:${f.QT_ALTURA || 0}</span>
-                      ${fontColor ? `<span style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.04);border-radius:4px;padding:1px 5px;"><span style="width:8px;height:8px;border-radius:50%;background:${fontColor};border:1px solid rgba(255,255,255,0.2);flex-shrink:0;"></span><span style="color:#64748b;font-size:9px;">fonte</span></span>` : ''}
-                      ${bgColor ? `<span style="display:flex;align-items:center;gap:3px;background:rgba(255,255,255,0.04);border-radius:4px;padding:1px 5px;"><span style="width:8px;height:8px;border-radius:2px;background:${bgColor};border:1px solid rgba(255,255,255,0.2);flex-shrink:0;"></span><span style="color:#64748b;font-size:9px;">fundo</span></span>` : ''}
-                      ${f.QT_TAM_FONTE ? `<span style="color:#475569;font-size:9px;font-family:monospace;">${f.QT_TAM_FONTE}pt</span>` : ''}
+                    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                      <span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:${ft.color};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:500;">${ft.label}</span>
+                       <span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:var(--tasy-text-muted);border-radius:4px;padding:2px 6px;font-size:9px;font-family:monospace;"><span style="opacity:0.6">X:</span>${f.QT_ESQUERDA || 0}</span>
+                       <span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:var(--tasy-text-muted);border-radius:4px;padding:2px 6px;font-size:9px;font-family:monospace;"><span style="opacity:0.6">Y:</span>${f.QT_TOPO || 0}</span>
+                       <span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:var(--tasy-text-muted);border-radius:4px;padding:2px 6px;font-size:9px;font-family:monospace;"><span style="opacity:0.6">W:</span>${f.QT_TAMANHO || 0}</span>
+                       <span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:var(--tasy-text-muted);border-radius:4px;padding:2px 6px;font-size:9px;font-family:monospace;"><span style="opacity:0.6">H:</span>${f.QT_ALTURA || 0}</span>
+                       ${fontColor ? `<span style="display:flex;align-items:center;gap:4px;background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);border-radius:4px;padding:2px 6px;"><span style="width:8px;height:8px;border-radius:50%;background:${fontColor};border:1px solid var(--tasy-border);flex-shrink:0;"></span><span style="color:var(--tasy-text-muted);font-size:9px;">fonte</span></span>` : ''}
+                       ${bgColor ? `<span style="display:flex;align-items:center;gap:4px;background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);border-radius:4px;padding:2px 6px;"><span style="width:8px;height:8px;border-radius:2px;background:${bgColor};border:1px solid var(--tasy-border);flex-shrink:0;"></span><span style="color:var(--tasy-text-muted);font-size:9px;">fundo</span></span>` : ''}
+                       ${f.QT_TAM_FONTE ? `<span style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);color:var(--tasy-text-muted);border-radius:4px;padding:2px 6px;font-size:9px;font-family:monospace;">${f.QT_TAM_FONTE}pt</span>` : ''}
                     </div>
                   </div>
-                  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; padding:6px 8px; border-left:1px solid rgba(255,255,255,0.04);">
+                  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; padding:6px 10px; border-left:1px solid var(--tasy-border);">
                     <button class="tasy-btn-clone-field" data-seq="${f.NR_SEQUENCIA}" title="Clonar campo"
-                      style="border:none;background:rgba(167,139,250,0.08);color:#7c6cbb;width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;"
-                      onmouseover="this.style.background='rgba(167,139,250,0.22)';this.style.color='#a78bfa'"
-                      onmouseout="this.style.background='rgba(167,139,250,0.08)';this.style.color='#7c6cbb'">
+                      style="border:none;background:transparent;color:var(--tasy-text-muted);width:28px;height:28px;border-radius:var(--tasy-radius-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;"
+                      onmouseover="this.style.background='var(--tasy-bg-hover)';this.style.color='var(--tasy-text-main)'"
+                      onmouseout="this.style.background='transparent';this.style.color='var(--tasy-text-muted)'">
                       ${Icons.clone}
                     </button>
                     <button class="tasy-btn-delete-field" data-seq="${f.NR_SEQUENCIA}" title="Deletar campo"
-                      style="border:none;background:rgba(239,68,68,0.06);color:#7f3f3f;width:26px;height:26px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.18s;flex-shrink:0;"
-                      onmouseover="this.style.background='rgba(239,68,68,0.22)';this.style.color='#ef4444'"
-                      onmouseout="this.style.background='rgba(239,68,68,0.06)';this.style.color='#7f3f3f'">
+                      style="border:none;background:transparent;color:var(--tasy-text-muted);width:28px;height:28px;border-radius:var(--tasy-radius-sm);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;"
+                      onmouseover="this.style.background='var(--tasy-danger)';this.style.color='white'"
+                      onmouseout="this.style.background='transparent';this.style.color='var(--tasy-text-muted)'">
                       ${Icons.trash}
                     </button>
                   </div>
@@ -128,21 +124,23 @@ window.TasyPdf = window.TasyPdf || {};
                 el.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
-                    el.style.border = '1px dashed #3b82f6';
-                    el.style.transform = 'translateX(2px)';
+                    el.style.border = '1px solid var(--tasy-text-main)';
+                    el.style.boxShadow = '0 0 10px rgba(255,255,255,0.1)';
+                    el.style.transform = 'translateY(-2px)';
+                    el.style.zIndex = '20';
                 });
                 el.addEventListener('dragleave', (e) => {
-                    const inactive = el.style.opacity === '0.45';
-                    const isCopied = String(ctx.fieldClipboard?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
-                    el.style.border = isCopied ? '1px solid rgba(167,139,250,0.45)' : inactive ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(255,255,255,0.06)';
+                    const isActive = state.activeField?.NR_SEQUENCIA === parseInt(el.getAttribute('data-seq'));
+                    el.style.border = isActive ? '1px solid var(--tasy-text-main)' : '1px solid var(--tasy-border)';
+                    el.style.boxShadow = isActive ? '0 4px 12px rgba(0,0,0,0.5)' : 'none';
                     el.style.transform = 'none';
+                    el.style.zIndex = isActive ? '10' : '1';
                 });
                 el.addEventListener('drop', (e) => {
                     e.stopPropagation();
                     const dropTargetIndex = parseInt(el.getAttribute('data-index'));
-                    const inactive = el.style.opacity === '0.45';
-                    const isCopied = String(ctx.fieldClipboard?.NR_SEQUENCIA) === String(el.getAttribute('data-seq'));
-                    el.style.border = isCopied ? '1px solid rgba(167,139,250,0.45)' : inactive ? '1px solid rgba(255,255,255,0.03)' : '1px solid rgba(255,255,255,0.06)';
+                    const isActive = state.activeField?.NR_SEQUENCIA === parseInt(el.getAttribute('data-seq'));
+                    el.style.border = isActive ? '1px solid var(--tasy-text-main)' : '1px solid var(--tasy-border)';
                     el.style.transform = 'none';
 
                     if (dragSourceIndex !== null && dragSourceIndex !== dropTargetIndex) {
@@ -152,18 +150,56 @@ window.TasyPdf = window.TasyPdf || {};
                     return false;
                 });
                 el.addEventListener('dragend', () => {
-                    el.style.opacity = el.innerHTML.includes('INATIVO') ? '0.45' : '1';
+                    const isActive = state.activeField?.NR_SEQUENCIA === parseInt(el.getAttribute('data-seq'));
+                    el.style.border = isActive ? '1px solid var(--tasy-text-main)' : '1px solid var(--tasy-border)';
+                    el.style.boxShadow = isActive ? '0 4px 12px rgba(0,0,0,0.5)' : 'none';
+                    el.style.zIndex = isActive ? '10' : '1';
+                    el.style.opacity = el.innerHTML.includes('INATIVO') ? '0.5' : '1';
                     setTimeout(() => { window._tasyIsDragging = false; }, 100);
                 });
             });
         },
 
-        handleReorder: function (fromIdx, toIdx) {
-            const fields = [...state.rawFields];
+        handleReorder: async function (fromIdx, toIdx) {
+            // Snapshot imutável de todos os campos ANTES de qualquer mutação
+            const snapshots = state.rawFields.map(f => ({ ...f }));
+            const fields = state.rawFields.map(f => ({ ...f }));
+
+            // Captura os valores de ordem atuais para redistribuir
+            const seqValues = fields.map((f, i) => f.NR_SEQ_APRESENTACAO || (i + 1)).sort((a, b) => a - b);
+
             const [movedItem] = fields.splice(fromIdx, 1);
             fields.splice(toIdx, 0, movedItem);
+
+            const updates = [];
+            fields.forEach((f, i) => {
+                const newSeq = seqValues[i];
+                // Usa o snapshot original para pegar o oldSeq correto
+                const oldObjOriginal = snapshots.find(s => s.NR_SEQUENCIA === f.NR_SEQUENCIA);
+                const oldSeq = oldObjOriginal?.NR_SEQ_APRESENTACAO;
+                if (oldSeq !== newSeq) {
+                    f.NR_SEQ_APRESENTACAO = newSeq;
+                    updates.push({ oldField: { ...oldObjOriginal }, newField: { ...f } });
+                }
+            });
+
             state.rawFields = fields;
             this.render();
+
+            if (updates.length > 0) {
+                try {
+                    // Executa updates em série com pequeno atraso para estabilidade do Tasy
+                    for (let u of updates) {
+                        await ctx.updateFieldObj(u.oldField, u.newField);
+                        await new Promise(r => setTimeout(r, 100)); // Sleep 100ms
+                    }
+                    Toasts.show('Ordem atualizada com sucesso no banco!', 'success');
+                } catch (err) {
+                    Toasts.show('Tasy recusou atualização de ordem. Tente novamente.', 'error');
+                    console.error('[Tasy PDF] Erro na reordenação:', err);
+                    this.load(); 
+                }
+            }
         },
 
         paste: async function () {
@@ -191,14 +227,14 @@ window.TasyPdf = window.TasyPdf || {};
             });
             const nome = fieldObj.DS_CAMPO || `Campo #${fieldObj.NR_SEQUENCIA}`;
             modal.innerHTML = `
-              <div style="background:#1e1e2e;border:1px solid rgba(239,68,68,0.3);border-radius:14px;padding:28px;width:340px;max-width:95vw;box-shadow:0 30px 80px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;text-align:center;">
-                <div style="color:#f1f5f9;font-size:16px;font-weight:700;margin-bottom:8px;">Deletar campo?</div>
-                <div style="color:#94a3b8;font-size:13px;margin-bottom:12px;">Você está prestes a deletar permanentemente:</div>
-                <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;color:#fca5a5;font-size:13px;font-weight:600;font-family:monospace;">${nome}</div>
-                <div style="color:#475569;font-size:11px;margin-bottom:20px;">Esta ação não pode ser desfeita.</div>
-                <div style="display:flex;gap:10px;">
-                  <button id="md-cancel" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Cancelar</button>
-                  <button id="md-confirm" style="flex:1;padding:12px;background:#ef4444;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(239,68,68,0.3);">${Icons.trash} Deletar</button>
+              <div style="background:var(--tasy-bg-surface-solid);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-lg);padding:28px;width:340px;max-width:95vw;box-shadow:var(--tasy-shadow-lg);font-family:system-ui,sans-serif;text-align:center;">
+                <div style="color:var(--tasy-text-main);font-size:16px;font-weight:700;margin-bottom:8px;">Deletar campo?</div>
+                <div style="color:var(--tasy-text-muted);font-size:13px;margin-bottom:12px;">Você está prestes a deletar permanentemente:</div>
+                <div style="background:var(--tasy-bg-hover);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);padding:10px 14px;margin-bottom:12px;color:var(--tasy-text-main);font-size:13px;font-weight:600;font-family:monospace;">${nome}</div>
+                <div style="color:var(--tasy-text-muted);font-size:11px;margin-bottom:24px;">Esta ação não pode ser desfeita.</div>
+                <div style="display:flex;gap:12px;">
+                  <button id="md-cancel" style="flex:1;padding:12px;background:transparent;color:var(--tasy-text-main);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--tasy-bg-hover)'" onmouseout="this.style.background='transparent'">Cancelar</button>
+                  <button id="md-confirm" style="flex:1;padding:12px;background:var(--tasy-danger);color:white;border:none;border-radius:var(--tasy-radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span style="display:flex;">${Icons.trash}</span> Deletar</button>
                 </div>
               </div>`;
             document.body.appendChild(modal);
@@ -235,55 +271,55 @@ window.TasyPdf = window.TasyPdf || {};
                 alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
             });
             modal.innerHTML = `
-              <div style="background:#1e1e2e;border:1px solid rgba(167,139,250,0.3);border-radius:14px;padding:24px;width:420px;max-width:95vw;box-shadow:0 30px 80px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                  <span style="color:#f1f5f9;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;">${Icons.add} Novo Campo</span>
-                  <button id="mc-close" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;">✕</button>
+              <div style="background:var(--tasy-bg-surface-solid);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-lg);padding:32px;width:460px;max-width:95vw;box-shadow:var(--tasy-shadow-lg);font-family:system-ui,sans-serif;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                  <span style="color:var(--tasy-text-main);font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;">${Icons.add} Novo Campo</span>
+                  <button id="mc-close" style="background:none;border:none;color:var(--tasy-text-muted);cursor:pointer;font-size:20px;line-height:1;transition:all 0.2s;" onmouseover="this.style.color='var(--tasy-text-main)'" onmouseout="this.style.color='var(--tasy-text-muted)'">✕</button>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:14px;">
+                <div style="display:flex;flex-direction:column;gap:16px;">
                   <div>
-                    <label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">NOME DO CAMPO</label>
-                    <input id="mc-nome" type="text" value="NOVO_CAMPO" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" />
+                    <label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">NOME DO CAMPO</label>
+                    <input id="mc-nome" type="text" value="NOVO_CAMPO" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;transition:all 0.2s;" onfocus="this.style.borderColor='var(--tasy-text-muted)'" onblur="this.style.borderColor='var(--tasy-border)'" />
                   </div>
                   <div>
-                    <label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">CONTEÚDO / TEXTO FIXO</label>
-                    <input id="mc-conteudo" type="text" placeholder="Ex: Relatório de Atendimento" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" />
+                    <label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">CONTEÚDO</label>
+                    <input id="mc-conteudo" type="text" placeholder="Conteúdo textual" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;transition:all 0.2s;" onfocus="this.style.borderColor='var(--tasy-text-muted)'" onblur="this.style.borderColor='var(--tasy-border)'" />
                   </div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">X (Esquerda)</label>
-                    <input id="mc-x" type="number" value="5" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" /></div>
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Y (Topo)</label>
-                    <input id="mc-y" type="number" value="1" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" /></div>
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Largura (W)</label>
-                    <input id="mc-w" type="number" value="50" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" /></div>
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Altura (H)</label>
-                    <input id="mc-h" type="number" value="17" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" /></div>
+                  <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:12px;">
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">X (Left)</label>
+                    <input id="mc-x" type="number" value="5" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" /></div>
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">Y (Top)</label>
+                    <input id="mc-y" type="number" value="1" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" /></div>
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">L (Width)</label>
+                    <input id="mc-w" type="number" value="50" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" /></div>
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">A (Height)</label>
+                    <input id="mc-h" type="number" value="17" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" /></div>
                   </div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Tamanho Fonte</label>
-                    <input id="mc-fontsize" type="number" value="8" style="width:100%;box-sizing:border-box;padding:10px 12px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:13px;outline:none;" /></div>
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Estilo</label>
-                    <select id="mc-fontstyle" style="width:100%;height:42px;padding:0 10px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:12px;outline:none;color-scheme:dark;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">Tamanho Fonte</label>
+                    <input id="mc-fontsize" type="number" value="8" style="width:100%;box-sizing:border-box;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" /></div>
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">Estilo</label>
+                    <select id="mc-fontstyle" style="width:100%;height:45px;padding:0 12px;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;color-scheme:dark;">
                       <option value="">Normal</option><option value="N">Negrito</option>
                       <option value="I">Itálico</option><option value="NI">Negrito + Itálico</option>
                       <option value="S">Sublinhado</option>
                     </select></div>
                   </div>
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Cor da Fonte</label>
-                    <div style="display:flex;gap:6px;align-items:center;">
-                      <input type="color" id="mc-fontcolor-picker" value="#000000" style="width:36px;height:36px;padding:0;border:none;background:transparent;cursor:pointer;border-radius:6px;flex-shrink:0;" />
-                      <input id="mc-fontcolor" type="text" value="clBlack" style="flex:1;min-width:0;padding:10px 8px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:12px;outline:none;" />
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">Cor da Fonte</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                      <input type="color" id="mc-fontcolor-picker" value="#000000" style="width:40px;height:40px;padding:0;border:none;background:transparent;cursor:pointer;border-radius:6px;flex-shrink:0;" />
+                      <input id="mc-fontcolor" type="text" value="clBlack" style="flex:1;min-width:0;padding:12px;background:transparent;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;" />
                     </div></div>
-                    <div><label style="color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:0.5px;display:block;margin-bottom:6px;">Alinhamento</label>
-                    <select id="mc-align" style="width:100%;height:42px;padding:0 10px;background:#2b2b3e;border:1px solid #3f3f5a;color:#f1f5f9;border-radius:8px;font-size:12px;outline:none;color-scheme:dark;">
+                    <div><label style="color:var(--tasy-text-muted);font-size:11px;font-weight:500;display:block;margin-bottom:6px;">Alinhamento</label>
+                    <select id="mc-align" style="width:100%;height:45px;padding:0 12px;border:1px solid var(--tasy-border);color:var(--tasy-text-main);border-radius:var(--tasy-radius-sm);font-size:13px;outline:none;color-scheme:dark;">
                       <option value="E">Esquerda</option><option value="C">Centro</option><option value="D">Direita</option>
                     </select></div>
                   </div>
                 </div>
-                <div style="display:flex;gap:10px;margin-top:22px;">
-                  <button id="mc-cancel" style="flex:1;padding:12px;background:rgba(255,255,255,0.05);color:#94a3b8;border:1px solid rgba(255,255,255,0.1);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Cancelar</button>
-                  <button id="mc-confirm" style="flex:2;padding:12px;background:#3b82f6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(59,130,246,0.3);">${Icons.add} Criar Campo</button>
+                <div style="display:flex;gap:12px;margin-top:32px;">
+                  <button id="mc-cancel" style="flex:1;padding:12px;background:transparent;color:var(--tasy-text-main);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background='var(--tasy-bg-hover)'" onmouseout="this.style.background='transparent'">Cancelar</button>
+                  <button id="mc-confirm" style="flex:2;padding:12px;background:var(--tasy-text-main);color:var(--tasy-bg-base);border:none;border-radius:var(--tasy-radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"><span style="display:flex;">${Icons.add}</span> Criar Campo</button>
                 </div>
               </div>`;
             document.body.appendChild(modal);

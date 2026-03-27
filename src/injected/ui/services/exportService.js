@@ -14,17 +14,17 @@ window.TasyPdf = window.TasyPdf || {};
                 alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
             });
             m.innerHTML = `
-                <div style="background:#1e1e2e;border:1px solid rgba(34,197,94,0.35);border-radius:14px;padding:24px;width:380px;max-width:95vw;box-shadow:0 30px 80px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;">
+                <div style="background:var(--tasy-bg-surface-solid);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-lg);padding:24px;width:380px;max-width:95vw;box-shadow:var(--tasy-shadow-lg);font-family:system-ui,sans-serif;">
                   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                    <span style="color:#f1f5f9;font-size:15px;font-weight:700;">↑ Importar Relatório XML</span>
-                    <button id="imp-close" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;">✕</button>
+                    <span style="color:var(--tasy-text-main);font-size:15px;font-weight:600;">↑ Importar Relatório XML</span>
+                    <button id="imp-close" style="background:none;border:none;color:var(--tasy-text-muted);cursor:pointer;font-size:20px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--tasy-text-main)'" onmouseout="this.style.color='var(--tasy-text-muted)'">✕</button>
                   </div>
-                  <div style="color:#475569;font-size:12px;margin-bottom:18px;">Importa o relatório exatamente como exportado pelo Tasy Studio ou pelo Tasy nativo.</div>
-                  <label id="imp-drop-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:32px 20px;background:#2b2b3e;border:2px dashed rgba(34,197,94,0.3);border-radius:12px;cursor:pointer;transition:all 0.2s;text-align:center;">
-                    <div style="width:48px;height:48px;background:rgba(34,197,94,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:24px;font-weight:700;">↑</div>
+                  <div style="color:var(--tasy-text-muted);font-size:12px;margin-bottom:24px;">Importa o relatório exatamente como exportado pelo Tasy Studio ou pelo Tasy nativo.</div>
+                  <label id="imp-drop-zone" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px 20px;background:transparent;border:2px dashed var(--tasy-border);border-radius:var(--tasy-radius-md);cursor:pointer;transition:all 0.2s;text-align:center;">
+                    <div style="width:48px;height:48px;background:var(--tasy-bg-hover);border-radius:var(--tasy-radius-md);display:flex;align-items:center;justify-content:center;color:var(--tasy-text-main);font-size:24px;font-weight:700;">↑</div>
                     <div>
-                      <div style="color:#f1f5f9;font-size:13px;font-weight:600;">Clique ou arraste o arquivo</div>
-                      <div id="imp-hint" style="color:#475569;font-size:11px;margin-top:4px;">Aceita arquivos .xml exportados pelo Studio</div>
+                      <div style="color:var(--tasy-text-main);font-size:13px;font-weight:500;">Clique ou arraste o arquivo</div>
+                      <div id="imp-hint" style="color:var(--tasy-text-muted);font-size:11px;margin-top:4px;">Aceita arquivos .xml exportados pelo Studio</div>
                     </div>
                     <input id="imp-file-input" type="file" accept=".xml" style="display:none;">
                   </label>
@@ -40,8 +40,8 @@ window.TasyPdf = window.TasyPdf || {};
             const hint = document.getElementById('imp-hint');
 
             fileInput.addEventListener('change', () => { if (fileInput.files?.[0]) this.runImport(fileInput.files[0], dropZone, hint, closeImp); });
-            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'rgba(34,197,94,0.8)'; dropZone.style.background = 'rgba(34,197,94,0.08)'; });
-            dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'rgba(34,197,94,0.3)'; dropZone.style.background = '#2b2b3e'; });
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.borderColor = 'var(--tasy-text-muted)'; dropZone.style.background = 'var(--tasy-bg-hover)'; });
+            dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = 'var(--tasy-border)'; dropZone.style.background = 'transparent'; });
             dropZone.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer?.files?.[0]; if (f) this.runImport(f, dropZone, hint, closeImp); });
         },
 
@@ -55,29 +55,34 @@ window.TasyPdf = window.TasyPdf || {};
                 alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
             });
             modal.innerHTML = `
-                <div style="background:#1e1e2e;border:1px solid rgba(96,165,250,0.3);border-radius:14px;padding:24px;width:400px;max-width:95vw;box-shadow:0 30px 80px rgba(0,0,0,0.6);font-family:system-ui,sans-serif;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                    <span style="color:#f1f5f9;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;">${Icons.exportIcon} Exportar / Importar</span>
-                    <button id="exp-close" style="background:none;border:none;color:#475569;cursor:pointer;font-size:20px;line-height:1;padding:2px 6px;">✕</button>
+                <div style="background:var(--tasy-bg-surface-solid);border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-lg);padding:32px;width:420px;max-width:95vw;box-shadow:var(--tasy-shadow-lg);font-family:system-ui,sans-serif;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <span style="color:var(--tasy-text-main);font-size:16px;font-weight:600;display:flex;align-items:center;gap:8px;"><span style="color:var(--tasy-text-muted)">${Icons.exportIcon}</span> Exportar / Importar</span>
+                    <button id="exp-close" style="background:none;border:none;color:var(--tasy-text-muted);cursor:pointer;font-size:20px;line-height:1;transition:color 0.2s;" onmouseover="this.style.color='var(--tasy-text-main)'" onmouseout="this.style.color='var(--tasy-text-muted)'">✕</button>
                   </div>
-                  <div style="color:#475569;font-size:12px;margin-bottom:18px;">Relatório <span style="color:#60a5fa;font-weight:600;">${state.reportCode}</span></div>
-                  <div style="display:flex;flex-direction:column;gap:10px;">
-                    <button id="exp-xml" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(96,165,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(96,165,250,0.6)';this.style.background='rgba(96,165,250,0.08)'" onmouseout="this.style.borderColor='rgba(96,165,250,0.2)';this.style.background='#2b2b3e'">
-                      <div style="width:38px;height:38px;background:rgba(96,165,250,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#60a5fa;font-size:14px;font-weight:800;">XML</div>
-                      <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Estrutura Completa</div><div style="color:#475569;font-size:11px;margin-top:2px;">Bandas, campos e parâmetros — compatível com importação</div></div>
+                  <div style="color:var(--tasy-text-muted);font-size:12px;margin-bottom:24px;">Relatório <span style="color:var(--tasy-text-main);font-weight:500;">${state.reportCode}</span></div>
+                  <div style="display:flex;flex-direction:column;gap:12px;">
+                    <button id="exp-xml" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:transparent;border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='var(--tasy-bg-hover)'" onmouseout="this.style.background='transparent'">
+                      <div style="width:38px;height:38px;background:var(--tasy-bg-hover);border-radius:var(--tasy-radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tasy-text-main);font-size:14px;font-weight:700;">XML</div>
+                      <div><div style="color:var(--tasy-text-main);font-size:13px;font-weight:500;">Estrutura Completa</div><div style="color:var(--tasy-text-muted);font-size:11px;margin-top:2px;">Bandas, campos e parâmetros — compatível com importação</div></div>
                     </button>
-                    <button id="exp-pdf" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(239,68,68,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(239,68,68,0.6)';this.style.background='rgba(239,68,68,0.08)'" onmouseout="this.style.borderColor='rgba(239,68,68,0.2)';this.style.background='#2b2b3e'">
-                      <div style="width:38px;height:38px;background:rgba(239,68,68,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#ef4444;font-size:14px;font-weight:800;">PDF</div>
-                      <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Gerar e Baixar PDF</div><div style="color:#475569;font-size:11px;margin-top:2px;">Gera o relatório e baixa o arquivo PDF gerado</div></div>
+                    <button id="exp-pdf" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:transparent;border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='var(--tasy-danger-bg)';this.style.borderColor='var(--tasy-danger)'" onmouseout="this.style.background='transparent';this.style.borderColor='var(--tasy-border)'">
+                      <div style="width:38px;height:38px;background:var(--tasy-bg-hover);border-radius:var(--tasy-radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tasy-danger);font-size:14px;font-weight:700;">PDF</div>
+                      <div><div style="color:var(--tasy-text-main);font-size:13px;font-weight:500;">Gerar e Baixar PDF</div><div style="color:var(--tasy-text-muted);font-size:11px;margin-top:2px;">Gera o relatório e baixa o arquivo PDF gerado</div></div>
                     </button>
-                    <button id="exp-json" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(167,139,250,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.borderColor='rgba(167,139,250,0.6)';this.style.background='rgba(167,139,250,0.08)'" onmouseout="this.style.borderColor='rgba(167,139,250,0.2)';this.style.background='#2b2b3e'">
-                      <div style="width:38px;height:38px;background:rgba(167,139,250,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#a78bfa;font-size:12px;font-weight:800;">JSON</div>
-                      <div><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Backup Legível</div><div style="color:#475569;font-size:11px;margin-top:2px;">Estrutura completa em JSON — fácil de ler e editar</div></div>
+                    <button id="exp-json" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:transparent;border:1px solid var(--tasy-border);border-radius:var(--tasy-radius-sm);cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='var(--tasy-bg-hover)'" onmouseout="this.style.background='transparent'">
+                      <div style="width:38px;height:38px;background:var(--tasy-bg-hover);border-radius:var(--tasy-radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tasy-text-main);font-size:12px;font-weight:700;">JSON</div>
+                      <div><div style="color:var(--tasy-text-main);font-size:13px;font-weight:500;">Backup Legível</div><div style="color:var(--tasy-text-muted);font-size:11px;margin-top:2px;">Estrutura completa em JSON — fácil de ler e editar</div></div>
                     </button>
-                    <div style="height:1px;background:rgba(255,255,255,0.06);margin:4px 0;"></div>
-                    <label id="exp-import-label" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#2b2b3e;border:1px solid rgba(34,197,94,0.2);border-radius:10px;cursor:pointer;transition:all 0.2s;text-align:left;width:100%;box-sizing:border-box;" onmouseover="this.style.borderColor='rgba(34,197,94,0.6)';this.style.background='rgba(34,197,94,0.06)'" onmouseout="this.style.borderColor='rgba(34,197,94,0.2)';this.style.background='#2b2b3e'">
-                      <div style="width:38px;height:38px;background:rgba(34,197,94,0.15);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#22c55e;font-size:18px;font-weight:700;">↑</div>
-                      <div style="flex:1;"><div style="color:#f1f5f9;font-size:13px;font-weight:600;">Importar XML</div><div id="exp-import-hint" style="color:#475569;font-size:11px;margin-top:2px;">Selecione ou arraste um arquivo .xml para importar</div></div>
+                    <div style="height:1px;background:var(--tasy-border);margin:4px 0;"></div>
+                    <button id="exp-copy-json" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:transparent;border:1px dashed var(--tasy-border);border-radius:var(--tasy-radius-sm);cursor:pointer;transition:all 0.2s;text-align:left;width:100%;" onmouseover="this.style.background='var(--tasy-bg-hover)'" onmouseout="this.style.background='transparent'">
+                      <div style="width:38px;height:38px;background:var(--tasy-bg-hover);border-radius:var(--tasy-radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--tasy-text-main);font-size:16px;font-weight:500;">⎘</div>
+                      <div><div style="color:var(--tasy-text-main);font-size:13px;font-weight:500;">Copiar JSON</div><div style="color:var(--tasy-text-muted);font-size:11px;margin-top:2px;">Copia estrutura completa para área de transferência</div></div>
+                    </button>
+                    <div style="height:1px;background:var(--tasy-border);margin:4px 0;"></div>
+                    <label id="exp-import-label" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:transparent;border:1px solid var(--tasy-text-main);border-radius:var(--tasy-radius-sm);cursor:pointer;transition:all 0.2s;text-align:left;width:100%;box-sizing:border-box;" onmouseover="this.style.background='var(--tasy-text-main)';this.style.color='var(--tasy-bg-base)'" onmouseout="this.style.background='transparent';this.style.color='var(--tasy-text-main)'">
+                      <div style="width:38px;height:38px;background:var(--tasy-bg-base);border-radius:var(--tasy-radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:inherit;font-size:18px;font-weight:700;">↑</div>
+                      <div style="flex:1;"><div style="color:inherit;font-size:13px;font-weight:600;">Importar XML</div><div id="exp-import-hint" style="color:inherit;opacity:0.8;font-size:11px;margin-top:2px;">Selecione ou arraste um arquivo .xml para importar</div></div>
                       <input id="exp-import-input" type="file" accept=".xml" style="display:none;">
                     </label>
                   </div>
@@ -91,6 +96,7 @@ window.TasyPdf = window.TasyPdf || {};
             document.getElementById('exp-xml').addEventListener('click', () => this.exportXml());
             document.getElementById('exp-pdf').addEventListener('click', () => this.exportPdf());
             document.getElementById('exp-json').addEventListener('click', () => this.exportJson());
+            document.getElementById('exp-copy-json').addEventListener('click', () => this.copyJson());
             
             const importInput = document.getElementById('exp-import-input');
             const importLabel = document.getElementById('exp-import-label');
@@ -100,8 +106,8 @@ window.TasyPdf = window.TasyPdf || {};
 
         runImport: async function (file, dropZone, hint, onSuccess) {
             if (!file || !file.name.match(/\.xml$/i)) { Toasts.show('Selecione um arquivo .xml válido.', 'error'); return; }
-            dropZone.style.borderColor = 'rgba(34,197,94,0.8)';
-            dropZone.style.background = 'rgba(34,197,94,0.08)';
+            dropZone.style.borderColor = 'var(--tasy-text-main)';
+            dropZone.style.background = 'var(--tasy-bg-hover)';
             dropZone.style.pointerEvents = 'none';
             hint.textContent = `Enviando "${file.name}"...`;
             try {
@@ -147,8 +153,8 @@ window.TasyPdf = window.TasyPdf || {};
                 }
             } catch (err) {
                 Toasts.show('Erro ao importar: ' + err.message, 'error');
-                dropZone.style.borderColor = 'rgba(34,197,94,0.3)';
-                dropZone.style.background = '#2b2b3e';
+                dropZone.style.borderColor = 'var(--tasy-border)';
+                dropZone.style.background = 'transparent';
                 dropZone.style.pointerEvents = '';
                 hint.textContent = 'Aceita arquivos .xml exportados pelo Studio';
             }
@@ -193,6 +199,26 @@ window.TasyPdf = window.TasyPdf || {};
             } catch (err) {
                 Toasts.show('Erro ao gerar PDF: ' + err.message, 'error');
                 btn.style.opacity = '1'; btn.style.pointerEvents = '';
+            }
+        },
+
+        copyJson: async function () {
+            const btn = document.getElementById('exp-copy-json');
+            if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
+            try {
+                const bands = await ctx.fetchBands(state.reportSeq);
+                const fullData = { exportedAt: new Date().toISOString(), reportCode: state.reportCode, reportSeq: state.reportSeq, bands: [] };
+                for (const band of bands) {
+                    const fields = await ctx.fetchFields(band.NR_SEQUENCIA);
+                    fullData.bands.push({ ...band, fields });
+                }
+                const json = JSON.stringify(fullData, null, 2);
+                await navigator.clipboard.writeText(json);
+                Toasts.show(`JSON copiado! (${bands.length} bandas)`, 'success');
+                document.getElementById('tasy-modal-export')?.remove();
+            } catch (err) {
+                Toasts.show('Erro ao copiar JSON: ' + err.message, 'error');
+                if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = ''; }
             }
         },
 
