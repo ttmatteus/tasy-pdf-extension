@@ -85,31 +85,47 @@ window.TasyPdf = window.TasyPdf || {};
     ];
   };
 
+  // Executa o prefetch dos parâmetros de um relatório ao detectar mudança de painel
+  async function _runPrefetch() {
+    if (ctx.running || !ctx.$httpGlobal) return;
+    try {
+      const reportInfo = ctx.getReportCodeFromScope();
+      if (!reportInfo) return;
+      if (!cachedReportParam || cachedReportParam.code !== reportInfo.code) {
+        const r1 = await ctx.$httpGlobal.post(
+          '/TasyAppServer/resources/service/Report/getReportsData',
+          ctx.buildReportsDataBody(reportInfo.code, reportInfo.type)
+        );
+        if (r1.data?.reports?.[0]) {
+          cachedReportParam = r1.data.reports[0];
+          ctx.log?.('Prefetch concluído para:', reportInfo.code);
+        }
+      }
+    } catch (e) {}
+  }
+
   ctx.startPrefetchRoutine = function() {
     if (!ctx.prefs.prefetch) return;
-    
-    if (prefetchTimer) clearInterval(prefetchTimer);
 
-    prefetchTimer = setInterval(async () => {
-      if (ctx.running || !ctx.$httpGlobal) return;
+    // Para qualquer rotina anterior
+    if (prefetchTimer) { clearInterval(prefetchTimer); prefetchTimer = null; }
+    if (ctx._prefetchObserver) { ctx._prefetchObserver.disconnect(); ctx._prefetchObserver = null; }
 
-      try {
-        const reportInfo = ctx.getReportCodeFromScope();
-        if (!reportInfo) return;
+    // Tenta usar MutationObserver para reagir a mudanças de painel no Tasy
+    // É muito mais eficiente que polling: só dispara quando o DOM realmente muda
+    const tasyRoot = document.querySelector('body'); // observa o body pois os painéis são inseridos dinamicamente
+    if (tasyRoot) {
+      let debounceTimer = null;
+      ctx._prefetchObserver = new MutationObserver(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(_runPrefetch, 600);
+      });
+      ctx._prefetchObserver.observe(tasyRoot, { childList: true, subtree: true, attributes: false, characterData: false });
+      ctx.log?.('Prefetch via MutationObserver ativo');
+    }
 
-        if (!cachedReportParam || cachedReportParam.code !== reportInfo.code) {
-          const r1 = await ctx.$httpGlobal.post(
-            '/TasyAppServer/resources/service/Report/getReportsData',
-            ctx.buildReportsDataBody(reportInfo.code, reportInfo.type)
-          );
-
-          if (r1.data?.reports?.[0]) {
-            cachedReportParam = r1.data.reports[0];
-          }
-        }
-      } catch (e) {
-      }
-    }, 2000);
+    // Fallback: setInterval a cada 5s para casos onde o MutationObserver não pega a mudança
+    prefetchTimer = setInterval(_runPrefetch, 5000);
   };
 
   ctx.getCachedReportParam = () => cachedReportParam;

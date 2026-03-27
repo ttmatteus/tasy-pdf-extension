@@ -5,47 +5,34 @@ window.TasyPdf = window.TasyPdf || {};
     ctx.init = function () {
         if (ctx._initialized) return;
 
-        // Detecção do Tasy: procura por elementos específicos ou presença do Angular
         const hasTasyMarkers = !!document.querySelector('div.wdbpanel, div.wcpanel, [w-activator], [wactivator]');
         const isTasyUrl = location.href.toLowerCase().includes('unimedmaceio.com.br');
+        const isLoginPage = location.href.toLowerCase().includes('/login');
 
-        // Se ainda não encontrou nem markers do Tasy nem o Angular
+        if (isLoginPage) return;
+
         if (!hasTasyMarkers && !window.angular) {
-            // Mas parece ser uma URL do Tasy, então vamos esperar carregar...
             if (isTasyUrl) {
                 if (!this._initAttempts) this._initAttempts = 0;
-                if (this._initAttempts < 5) { // Tenta por 10 segundos
+                if (this._initAttempts < 5) {
                     this._initAttempts++;
                     setTimeout(() => ctx.init(), 2000);
                 }
             }
-            // Retorna pois ainda não está pronto para injetar (ou nunca estará)
             return;
         }
 
-
-        // Iniciar estilos
         if (ctx.Styles) ctx.Styles.inject();
+        if (ctx.Navbar) ctx.Navbar.inject();
+        if (ctx.Spotlight) ctx.Spotlight.setup();
 
-        // Injetar Navbar (o shell principal)
-        if (ctx.Navbar) {
-            ctx.Navbar.inject();
-        }
-
-        // Injetar Spotlight (lógica de busca)
-        if (ctx.Spotlight) {
-            ctx.Spotlight.setup();
-        }
-
-        // Registrar atalhos globais
         this.setupGlobalShortcuts();
-
         ctx._initialized = true;
     };
 
     ctx.setupGlobalShortcuts = function () {
-        document.addEventListener('keydown', (e) => {
-
+        // Registro de atalho de teclado
+        window.addEventListener('keydown', (e) => {
             // Ctrl+C para copiar (Campo ou Banda baseado no hover)
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
                 if (ctx.state.level === 2 && ctx.state.hoveredField) {
@@ -63,7 +50,6 @@ window.TasyPdf = window.TasyPdf || {};
 
             // Atalhos de nível 2 (Campos)
             if (ctx.state.level === 2) {
-                // Ctrl+V para colar campo
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && ctx.fieldClipboard) {
                     e.preventDefault();
                     ctx.Fields.paste();
@@ -72,16 +58,77 @@ window.TasyPdf = window.TasyPdf || {};
 
             // Atalhos de nível 1 (Bandas)
             if (ctx.state.level === 1) {
-                // Ctrl+V para colar banda
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v' && ctx.bandClipboard) {
                     e.preventDefault();
                     ctx.Bands.paste();
                 }
             }
+
+            // Esc: navega para o nível anterior ou minimiza
+            if (e.key === 'Escape') {
+                if (ctx.state.level === 3) {
+                    ctx.EventBus?.emit('ui:closeFieldForm');
+                } else if (ctx.state.level === 2) {
+                    e.preventDefault();
+                    ctx.state.level = 1;
+                    if (ctx.Bands) ctx.Bands.load();
+                } else if (ctx.state.level === 1) {
+                    e.preventDefault();
+                    ctx.state.level = 0;
+                    if (ctx.Navbar) ctx.Navbar.switchView('search');
+                } else {
+                    if (ctx.Navbar) ctx.Navbar.minimize();
+                }
+            }
         });
 
-        // Delegação de eventos para botões dinâmicos
+        // Hover tracking (separado do clique)
+        document.addEventListener('mouseover', (e) => {
+            const fieldItem = e.target.closest('.tasy-field-item');
+            if (fieldItem) {
+                const seq = fieldItem.getAttribute('data-seq');
+                ctx.state.hoveredField = ctx.state.rawFields.find(f => String(f.NR_SEQUENCIA) === String(seq));
+            }
+            const bandItem = e.target.closest('.tasy-band-item');
+            if (bandItem) {
+                const seq = bandItem.getAttribute('data-seq');
+                ctx.state.hoveredBand = ctx.state.rawBands.find(b => String(b.NR_SEQUENCIA) === String(seq));
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.closest('.tasy-field-item')) ctx.state.hoveredField = null;
+            if (e.target.closest('.tasy-band-item')) ctx.state.hoveredBand = null;
+        });
+
+        // Eventos Globais de Clique e Visibilidade
+        document.addEventListener('mousedown', (e) => {
+            const nav = document.getElementById('tasy-pdf-navbar');
+            const pill = document.getElementById('tasy-pdf-pill');
+            
+            // Clique Fora do Studio (Minimizar)
+            if (nav && !nav.contains(e.target) && pill && !pill.contains(e.target)) {
+                if (ctx.state.level !== 3 && ctx.Navbar && nav.style.display !== 'none') {
+                    ctx.Navbar.minimize();
+                }
+            }
+        });
+
         document.addEventListener('click', (e) => {
+            // Botão Voltar (Navbar)
+            const btnBack = e.target.closest('#tasy-ed-btn-back');
+            if (btnBack) {
+                e.stopPropagation();
+                if (ctx.state.level === 2) {
+                    ctx.state.level = 1;
+                    if (ctx.Bands) ctx.Bands.load();
+                } else if (ctx.state.level === 1) {
+                    ctx.state.level = 0;
+                    if (ctx.Navbar) ctx.Navbar.switchView('search');
+                }
+                return;
+            }
+
             const btnDeleteField = e.target.closest('.tasy-btn-delete-field');
             if (btnDeleteField) {
                 const seq = btnDeleteField.getAttribute('data-seq');
@@ -122,24 +169,6 @@ window.TasyPdf = window.TasyPdf || {};
                 return;
             }
 
-            // Hover tracking para Ctrl+C/V
-            document.addEventListener('mouseover', (e) => {
-                const fieldItem = e.target.closest('.tasy-field-item');
-                if (fieldItem) {
-                    const seq = fieldItem.getAttribute('data-seq');
-                    ctx.state.hoveredField = ctx.state.rawFields.find(f => String(f.NR_SEQUENCIA) === String(seq));
-                }
-                const bandItem = e.target.closest('.tasy-band-item');
-                if (bandItem) {
-                    const seq = bandItem.getAttribute('data-seq');
-                    ctx.state.hoveredBand = ctx.state.rawBands.find(b => String(b.NR_SEQUENCIA) === String(seq));
-                }
-            });
-            document.addEventListener('mouseout', (e) => {
-                if (e.target.closest('.tasy-field-item')) ctx.state.hoveredField = null;
-                if (e.target.closest('.tasy-band-item')) ctx.state.hoveredBand = null;
-            });
-
             const btnEditBand = e.target.closest('.tasy-band-item');
             if (btnEditBand && !e.target.closest('button')) {
                 const seq = btnEditBand.getAttribute('data-seq');
@@ -152,10 +181,9 @@ window.TasyPdf = window.TasyPdf || {};
                 }
                 return;
             }
+
         });
     };
-
-    // Auto-inicialização quando o script carregar
 
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
         ctx.init();

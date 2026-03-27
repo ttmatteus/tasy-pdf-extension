@@ -249,7 +249,7 @@ window.TasyPdf = window.TasyPdf || {};
 
   ctx.fetchFields = async function (nrSeqBanda) {
     if (!nrSeqBanda) throw new Error("PK (NR_SEQ_BANDA) ausente.");
-    const payload = [{ "tipo": "RequisicaoDataSource", "@class": "br.com.wheb.vo.componentes.metaData.RequisicaoDataSource", "page": 1, "fieldActivators": {}, "selectFirstRecord": true, "paramsByName": { "_schematicObjCode": 1037895, "NR_SEQ_BANDA": Number(nrSeqBanda), "isToReloadActivationParameters": true, "cdSetorAtendimento": 0 }, "legendDef": {}, "functionVariables": {}, "tableName": "BANDA_RELAT_CAMPO", "nrSeqVisao": 96200, "nrSeqAtivacao": 57048, "featureCode": 260, "tableDescription": "BANDA_RELAT_CAMPO_260_96200_dg", "schematicsObj": 1037895, "tipoAtivacao": 3, "inicioPagina": 1, "qtRegistrosPagina": 150, "unificarCountRegistros": false, "withoutCache": false, "allAttributes": ["NR_SEQUENCIA", "NR_SEQ_BANDA", "DS_CAMPO", "DS_LABEL", "DS_CONTEUDO", "QT_ALTURA", "QT_TAMANHO", "QT_TOPO", "QT_ESQUERDA", "QT_TAM_FONTE", "DS_COR_FONTE", "DS_TIPO_FONTE", "DS_ESTILO_FONTE", "NM_ATRIBUTO", "IE_TIPO_CAMPO", "IE_ALINHAMENTO", "DS_ALINHAMENTO", "IE_BORDA_ESQ", "IE_BORDA_SUP", "IE_BORDA_DIR", "IE_BORDA_INF", "DS_COR_FUNDO", "DS_COR_LABEL", "IE_FUNDO_TRANSPARENTE", "IE_AJUSTAR_TAMANHO", "IE_TRANSPARENTE", "IE_SITUACAO", "DT_ATUALIZACAO", "NM_USUARIO"], "ieLibera": false, "isAutomaticPagination": true, "saveOrderBy": true }];
+    const payload = [{ "tipo": "RequisicaoDataSource", "@class": "br.com.wheb.vo.componentes.metaData.RequisicaoDataSource", "page": 1, "fieldActivators": {}, "selectFirstRecord": true, "paramsByName": { "_schematicObjCode": 1037895, "NR_SEQ_BANDA": Number(nrSeqBanda), "isToReloadActivationParameters": true, "cdSetorAtendimento": 0 }, "legendDef": {}, "functionVariables": {}, "tableName": "BANDA_RELAT_CAMPO", "nrSeqVisao": 96200, "nrSeqAtivacao": 57048, "featureCode": 260, "tableDescription": "BANDA_RELAT_CAMPO_260_96200_dg", "schematicsObj": 1037895, "tipoAtivacao": 3, "inicioPagina": 1, "qtRegistrosPagina": 150, "unificarCountRegistros": false, "withoutCache": false, "allAttributes": ["NR_SEQUENCIA", "NR_SEQ_BANDA", "DS_CAMPO", "DS_LABEL", "DS_CONTEUDO", "QT_ALTURA", "QT_TAMANHO", "QT_TOPO", "QT_ESQUERDA", "QT_TAM_FONTE", "DS_COR_FONTE", "DS_TIPO_FONTE", "DS_ESTILO_FONTE", "NM_ATRIBUTO", "IE_TIPO_CAMPO", "IE_ALINHAMENTO", "DS_ALINHAMENTO", "IE_BORDA_ESQ", "IE_BORDA_SUP", "IE_BORDA_DIR", "IE_BORDA_INF", "DS_COR_FUNDO", "DS_COR_LABEL", "IE_FUNDO_TRANSPARENTE", "IE_AJUSTAR_TAMANHO", "IE_TRANSPARENTE", "IE_SITUACAO", "DT_ATUALIZACAO", "NM_USUARIO", "NR_SEQ_APRESENTACAO"], "ieLibera": false, "isAutomaticPagination": true, "saveOrderBy": false }];
     const http = ctx.getHttpService();
     if (!http) throw new Error("Angular não está pronto.");
     const r = await http.post('/TasyAppServer/resources/service/DataSourceProvider/getDataSource', payload, { suppressError: true, ignoreError: true });
@@ -260,6 +260,13 @@ window.TasyPdf = window.TasyPdf || {};
     if (!arr) arr = extractListFromWhatever(r.data);
 
     if (!Array.isArray(arr)) arr = [];
+    // Ordena pelo NR_SEQ_APRESENTACAO para refletir a ordem de apresentação persistida
+    // Fallback: PAGING_RN (ordem de inserção no banco) para campos sem sequência definida
+    arr.sort((a, b) => {
+      const sa = a.NR_SEQ_APRESENTACAO != null ? a.NR_SEQ_APRESENTACAO : (a.PAGING_RN ?? 99999);
+      const sb = b.NR_SEQ_APRESENTACAO != null ? b.NR_SEQ_APRESENTACAO : (b.PAGING_RN ?? 99999);
+      return sa - sb;
+    });
     return arr;
   };
 
